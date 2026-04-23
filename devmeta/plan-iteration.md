@@ -209,13 +209,17 @@ Current increment's iterations/iteration-<N>/status.md
 <Updated as iteration progresses>
 ```
 
-### Step 8: Present the Plan
+### Step 8: Continue Immediately to Execution
 
-Show the feature independence map, task counts, parallelism metrics, and offer:
+**DO NOT pause, summarize, or ask the user anything.** Planning is not a stopping point — it is a waypoint inside `/devmeta:go`'s autonomous loop.
 
-> 1. Adjust feature boundaries or task scope?
-> 2. Start execution with `/devmeta:run`?
-> 3. Review the independence map for tighter cuts?
+After creating the tick structure, immediately:
+1. Run `tk next` to get the first task.
+2. Begin executing it.
+
+Do NOT write "here's the plan, shall I proceed?" messages. Do NOT present the feature independence map as a decision point. Do NOT offer options. The tick structure IS the plan; execution starts now.
+
+If the human needs to intervene, they will interrupt. Your job is to keep moving.
 
 ## Quality Checklist
 

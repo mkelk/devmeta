@@ -290,7 +290,18 @@ Follow-up tasks created: <list or "none">
 - Iteration <N+1>: <title>
 - Scope adjustments: <none / what changed>
 - Cleanup tasks carried forward: <N>
-- Ready to continue with `/devmeta:go`
 ```
 
 **Write the report to `.devmeta/ia-cycles/iteration-<N>.md`** so it persists as a permanent record.
+
+### Step 13: Continue Immediately — unless the increment is done
+
+**DO NOT pause after writing the report.** The I&A cycle is a waypoint inside `/devmeta:go`'s autonomous loop, not a stopping point.
+
+After writing the report:
+1. Run `tk next` to get the next task (typically "Plan Iteration N+1").
+2. Begin executing it immediately.
+
+Do NOT write "ready to continue with `/devmeta:go`" or any variation that implies the user drives the next step. Do NOT present a summary as a decision point. The loop continues; keep moving.
+
+**Exception: increment boundaries ARE stopping points.** If this was the I&A cycle for the final iteration of the current increment — i.e., the increment's `_overview.md` scope is now fully delivered and there is no Iteration N+1 — then after writing the report and closing the increment (update `current-increment.md`, PR, merge), STOP. Do not create a "bootstrap next increment" task, do not ask the user which increment to start next. The current `/devmeta:go` invocation is done; the user will re-invoke it when they're ready for the next increment.

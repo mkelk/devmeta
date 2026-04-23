@@ -191,7 +191,7 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
 | <id> | <title> | N tasks |
 ```
 
-### Phase 9: Final Summary
+### Phase 9: Final Summary and Continue
 
 ```markdown
 ## Execution Complete
@@ -208,12 +208,17 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
 ### Needs Attention (if any)
 | Feature | Task | Issue |
 |------|------|-------|
-
-
-### Next Steps
-- Address blocked tasks and run `/devmeta:run` again
-- Or: run `/devmeta:reflect` if iteration is complete
 ```
+
+**DO NOT pause, summarize with "Next Steps", or hand control back to the user — except at increment boundaries.** Execution is a waypoint inside `/devmeta:go`'s autonomous loop.
+
+After writing the summary:
+1. Run `tk next` to get the next task (typically "Create PR for iteration N", "Merge PR", or the next feature).
+2. Begin executing it immediately.
+
+If there are blocked tasks that cannot be unblocked autonomously, note them in tk and move on to whatever CAN be done. Only stop for genuine external blockers (missing API keys, missing hardware, human-only decisions).
+
+**Exception: increment completion is a stopping point.** If `tk next` returns nothing and all iterations of the current increment are closed, the increment is done — STOP. Do not create or pick up a "bootstrap next increment" task, do not ask the user which increment to start next. Write the completion summary and exit; the user re-invokes `/devmeta:go` when they're ready for the next increment.
 
 ## Error Handling
 

@@ -172,7 +172,10 @@ Create 2 tasks: "Run /devmeta:reflect N" and "Plan Iteration N+1: read scope, cr
 
 ### If `tk next` returns nothing: CHECK STATE
 
-- If all current increment iterations are closed → increment is complete
+- If all current increment iterations are closed → **increment is complete → STOP.**
+  - Write a short completion report (what shipped, any outstanding human-in-the-loop items such as live verification).
+  - Do NOT bootstrap a new increment. Do NOT ask the user which increment to start next. The current increment was the scope of this `/devmeta:go` invocation; its end is the end of the run.
+  - To start the next one, the user will either run `/devmeta:start-increment-spec` (for fresh scope) or update `.devmeta/current-increment.md` to point at a pre-spec'd increment, then re-invoke `/devmeta:go`.
 - If blocked iterations exist → close the blocking iteration first
 - If something is stuck → investigate and unblock
 - Verify against the current increment's scope — are all items actually closed?
@@ -187,7 +190,9 @@ Read `.devmeta/current-increment.md` to find the active increment, then read its
 
 **Never ask "should I continue?" or "want me to proceed?"** The tick structure tells you what to do. Do it.
 
-**Never stop to present a summary or status update.** Completing an iteration, a PR merge, or an I&A cycle is NOT a stopping point. It's a waypoint. Do NOT write "here's where we are" messages. Do NOT present a list of what was accomplished. `tk next` tells you what to do next — do it immediately. The agent stays in "doing work" mode at all times. Completing a large body of work triggers the instinct to summarize and defer to the user — resist this. The tick structure eliminates the decision point.
+**Never stop to present a summary or status update *within* an increment.** Completing an iteration, a PR merge, or an I&A cycle is NOT a stopping point. It's a waypoint. Do NOT write "here's where we are" messages. Do NOT present a list of what was accomplished. `tk next` tells you what to do next — do it immediately. The agent stays in "doing work" mode at all times. Completing a large body of work triggers the instinct to summarize and defer to the user — resist this. The tick structure eliminates the decision point.
+
+**The exception: completing an increment IS a stopping point.** Iteration and I&A boundaries are waypoints; increment boundaries are not. When `tk next` returns nothing and all current-increment iterations are closed, stop, write a short completion report, and exit. Do NOT create a "bootstrap next increment" task, do NOT ask which increment to start next, do NOT attempt to pick one from the NOT STARTED list. Increment selection is a human priority call and often requires `/devmeta:start-increment-spec` (interactive) anyway. The user will re-invoke `/devmeta:go` when they're ready for the next one. Structure the final iteration's I&A cycle so its last task is "Close increment N" (update metadata, PR, merge) — nothing after that.
 
 **Test before asking.** If you think something might not work, try it first.
 
