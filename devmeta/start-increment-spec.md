@@ -24,27 +24,32 @@ If no `.devmeta/devmeta.md` exists:
 
 Create a new increment directory with a properly structured `_overview.md` and begin defining scope interactively.
 
-### Step 1: Determine Increment Number
+### Step 1: Determine Increment Number and Suffix
 
-Read `.devmeta/current-increment.md` to find the current increment. The new increment is current + 1.
+Read `.devmeta/current-increment.md`. Parse the active increment line (`**Active:** Increment <num>[-<suffix>] — ...`) and extract the **leading integer**, ignoring any `-<suffix>` part. Add 1 to get the new increment number — call it `<NN>` for the rest of this command.
 
-Check if `.devmeta/increments/increment-<NN>/` already exists. If it does and has content, confirm with the user before overwriting.
+Generate a 3-letter random suffix `<XXX>` from `[a-z]` (e.g. `abc`, `xkl`, `qmt`). The suffix exists so parallel branches/worktrees that both pick the same `<NN>` land in different directories and don't merge-conflict on the increment subtree.
+
+Check that `.devmeta/increments/increment-<NN>-<XXX>/` does not already exist; if it does, regenerate the suffix and retry (up to 5 attempts — collisions are practically impossible).
+
+**Throughout this command, `<NN>` is the new increment integer and `<XXX>` is its 3-letter suffix.** The full increment identifier (used in directory names and the title) is `<NN>-<XXX>` (e.g. `76-abc`). Iteration numbers within this increment use `<NN>` only — `<NN>.1`, `<NN>.2`, `<NN>.1R` — never the suffix.
 
 ### Step 2: Create Increment Directory
 
 ```bash
-mkdir -p .devmeta/increments/increment-<NN>/iterations
+mkdir -p .devmeta/increments/increment-<NN>-<XXX>/iterations
+mkdir -p .devmeta/increments/increment-<NN>-<XXX>/ia-cycles
 ```
 
 ### Step 3: Create `_overview.md` from Template
 
-Write `.devmeta/increments/increment-<NN>/_overview.md` using this template:
+Write `.devmeta/increments/increment-<NN>-<XXX>/_overview.md` using this template:
 
 ```markdown
-# Increment <NN> — <Title>
+# Increment <NN>-<XXX> — <Title>
 
 **Status:** NOT STARTED
-**Depends on:** Increment <NN-1> (<previous increment title>)
+**Depends on:** Increment <previous-id> (<previous increment title>)
 **Goal:** <1-2 sentence goal — what the user can do after this increment that they couldn't before>
 
 ---
@@ -127,8 +132,8 @@ If `$ARGUMENTS` provides an increment title, use it. Otherwise, leave `<Title>` 
 ### Step 4: Update `.devmeta/current-increment.md`
 
 Update `.devmeta/current-increment.md` to point to the new increment:
-- Set the new increment as active with status NOT STARTED
-- Keep the previous increment reference with its final status
+- Set the new increment as active with status NOT STARTED, using the **suffixed identifier** in the line: `**Active:** Increment <NN>-<XXX> — <Title>: ...`
+- Keep the previous increment reference with its final status (its identifier stays whatever it was — historic ones may have no suffix)
 
 ### Step 5: Interactive Scope Definition
 
@@ -154,10 +159,10 @@ Update the `_overview.md` with each answer.
 
 Report:
 ```markdown
-## Increment <NN> Created
+## Increment <NN>-<XXX> Created
 
-**Directory:** `.devmeta/increments/increment-<NN>/`
-**Overview:** `.devmeta/increments/increment-<NN>/_overview.md`
+**Directory:** `.devmeta/increments/increment-<NN>-<XXX>/`
+**Overview:** `.devmeta/increments/increment-<NN>-<XXX>/_overview.md`
 **Iterations:** <N> planned
 **Status:** Ready for `/devmeta:plan-iteration <NN>.1`
 ```

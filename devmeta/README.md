@@ -55,12 +55,18 @@ DevMeta stores artifacts in `.devmeta/` at the project root:
   project-history.md        # Narrative record of what was built
   lessons-learned.md        # Accumulated learnings
   increments/
-    increment-01/
+    increment-01-abc/       # <NN>-<XXX>: integer for sorting + 3-letter random suffix
       _overview.md           # Scope, iteration map, exit criteria
       iterations/            # Per-iteration status files
-  ia-cycles/                 # Persisted I&A cycle reports
+      ia-cycles/             # Per-iteration I&A reports for this increment
   projects/                  # Feature specs and context logs
 ```
+
+Increment directories use a numeric prefix for sorting plus a 3-letter random suffix
+(e.g. `increment-76-abc/`). The suffix prevents merge conflicts when two parallel
+branches/worktrees both create the next increment. Iteration numbers within an
+increment are unsuffixed (`76.1`, `76.1R`) — they're already namespaced by the
+unique parent directory.
 
 Task tracking uses `tk` (tick tracker). Features are epics, work items are tasks.
 

@@ -202,10 +202,13 @@ Update the current increment's `iterations/iteration-<N>/status.md`:
 
 ### Step 9: Tag and Prune
 
-**Tag the iteration in Git:**
+**Tag the iteration in Git.** Include the increment suffix so parallel branches with the same iteration number don't collide on the tag:
+
 ```bash
-git tag iteration-<N> -m "Iteration <N> complete: <summary>"
+git tag iteration-<NN>-<XXX>.<M> -m "Iteration <N> complete: <summary>"
 ```
+
+Example: for iteration 76.1 of increment 76-abc, the tag is `iteration-76-abc.1`. Read the active increment's suffixed identifier from `.devmeta/current-increment.md`.
 
 **Prune completed ticks:**
 ```bash
@@ -277,7 +280,7 @@ Follow-up tasks created: <list or "none">
 - <Pattern 1>: <Resolution>
 
 ### Git & Housekeeping
-- Tagged: `iteration-<N>`
+- Tagged: `iteration-<NN>-<XXX>.<M>`
 - Ticks pruned: <N> features, <N> tasks deleted
 - Remaining open items: <N>
 
@@ -292,7 +295,7 @@ Follow-up tasks created: <list or "none">
 - Cleanup tasks carried forward: <N>
 ```
 
-**Write the report to `.devmeta/ia-cycles/iteration-<N>.md`** so it persists as a permanent record.
+**Write the report to `<active-increment-dir>/ia-cycles/iteration-<N>.md`** (e.g. `.devmeta/increments/increment-76-abc/ia-cycles/iteration-76.1.md`) so it persists as a permanent record. Read the active increment directory from `.devmeta/current-increment.md`. The flat `.devmeta/ia-cycles/` location is no longer used for new reports — historic reports there stay in place.
 
 ### Step 13: Continue Immediately — unless the increment is done
 

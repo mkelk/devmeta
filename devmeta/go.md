@@ -20,7 +20,7 @@ If no `.devmeta/devmeta.md` exists:
 
 This is the single command that drives the entire project. Run it to start. Run it again to continue. It figures out where the project is and does the next thing, autonomously, until it hits a genuine external blocker or closes all gaps.
 
-**Current increment:** Defined in `.devmeta/current-increment.md`. Follow the pointer to the active increment's `_overview.md` for scope, iterations, and gap analysis.
+**Current increment:** Defined in `.devmeta/current-increment.md`. Follow the pointer to the active increment's `_overview.md` for scope, iterations, and gap analysis. The active line names the increment as `Increment <NN>-<XXX>` (integer + 3-letter random suffix added to avoid parallel-branch collisions); its directory is `.devmeta/increments/increment-<NN>-<XXX>/`. Iteration numbers within use the integer only (`<NN>.1`, `<NN>.1R`).
 
 **You are the project driver.** You don't ask the user what to do — you assess the state and act. The only time you stop and ask is when you need something that requires human action on their physical machine (installing software, creating accounts, providing API keys).
 
