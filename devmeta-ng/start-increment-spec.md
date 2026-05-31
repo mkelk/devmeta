@@ -143,7 +143,7 @@ Begin an interactive dialogue to flesh out the overview. Ask about:
 2. **On-screen deliverables:** What will visually change?
 3. **Under-the-hood deliverables:** What technical work is needed?
 4. **Exclusions:** What is explicitly out of scope?
-5. **Iterations:** How should the work be split? (Aim for 2-5 iterations, each 1-3 days of agent work)
+5. **Iterations:** How should the work be split? **Rule of thumb — prefer fewer, larger iterations over many small ones.** Every iteration pays fixed overhead: a high-effort planning cut, a parallel build fan-out, a PR + merge per feature, an adversarial reflect cycle, and a base publish. A single-feature iteration spends most of its wall-clock on that ceremony rather than on building. So pack as many *independent* features as fit into each iteration (a wide parallel frontier), and add a new iteration only when **either** (a) a genuine **dependency wall** forces it — the next features cannot start until an earlier iteration's foundation has landed and merged — **or** (b) a **natural conceptual checkpoint** makes it worth validating a coherent slice before building more on top of it: where the I&A / acceptance gate on that slice would de-risk or reshape what comes next (prove the core approach works, confirm a load-bearing assumption, or learn something that changes the next features). Both are real reasons; splitting just to make iterations smaller is not. Aim for **2-4 iterations**; treat a single-feature iteration as a smell unless (a) or (b) genuinely applies.
 6. **Dependencies:** What must exist before this increment can start?
 7. **Blocked items:** Anything that needs human action (API keys, accounts, etc.)?
 8. **Exit criteria:** How do we know the increment is done?

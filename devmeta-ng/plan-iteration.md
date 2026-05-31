@@ -57,7 +57,14 @@ feature are sequential steps, not independent workers.
 > or as a node in the build workflow, and whether the dial is `high` or `max`.
 
 **Your primary job is finding feature boundaries that maximize independence.** More
-independence = a wider parallel frontier = faster wall-clock time.
+independence = a wider parallel frontier = faster wall-clock time. The same logic applies
+one level up, at the increment: **prefer fewer, larger iterations.** Each iteration pays
+fixed ceremony (this planning cut, the build fan-out, a PR + merge per feature, the
+adversarial reflect, a base publish), so when the scope check below is tempted to split an
+iteration, split **only** when (a) a genuine dependency wall forces it, or (b) a natural
+conceptual checkpoint makes it worth validating a coherent slice (proving the approach,
+confirming an assumption) before building more on top — never just to make iterations
+smaller. A single-feature iteration is a smell unless (a) or (b) genuinely applies.
 
 **Workers are smart.** They have CLAUDE.md, the spec, the codebase, and
 `docs/current/`. Task descriptions guide; they do not micromanage.

@@ -181,7 +181,8 @@ and work here, in your own worktree).
 a. `tk update <task-id> --status in_progress`
 b. Implement the change AND its tests together.
 c. Run the SURGICAL test command for the touched code (never the full suite). Fix and
-   re-run until green.
+   re-run until green. Do NOT run a full project build/typecheck (`yarn build` / full
+   `tsc`) per feature — that runs ONCE at integration (devmeta Phase 4), not N times here.
 d. `git commit -m "[<task-id>] <what changed>"`  (one commit per task)
 e. `tk close <task-id> --reason "<summary>"`
 
@@ -189,6 +190,9 @@ e. `tk close <task-id> --reason "<summary>"`
 
 a. Append your learnings and any cross-feature signals to context-log.md.
 b. `tk note <epic-id> "FEATURE COMPLETE: <summary>"`
+   Then commit your tk closures on THIS feature branch (`git add .tick/` then `git commit`)
+   so they survive worktree pruning — tk writes per-issue files, so parallel features don't
+   collide on merge; closures left only in the worktree are lost when it is pruned.
 c. Open a PR TARGETING the base branch — do NOT merge:
    `gh pr create --base <base-branch> --head feature/YYYY-MM-DD-<feature-name> --title "..." --body "..."`
 d. Do NOT merge. Do NOT touch other feature branches. Merge/integration is devmeta's job
