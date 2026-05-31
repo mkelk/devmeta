@@ -135,6 +135,23 @@ This is the **sole launcher**. Detect the workflow opt-in (the `workflow` keywor
 
 **Resume continuity (you arrived here from Phase 0.4 on an open iteration that already has children).** Before launching anything, read the iteration epic's `tk note` for a recorded `substrate=…`. If one exists, **honor it** — the substrate is fixed for the life of the iteration, so a resume that omits the `workflow` keyword must not flip an in-flight workflow build to the Agent fallback (or vice-versa). On the workflow path specifically, do not re-launch from scratch: re-attach to / replay the journaled `build-iteration.workflow.js` for this iteration so already-completed features are not re-spawned (the journal is the resume unit; `tk` task state is the cross-check). Only when there is no recorded substrate (a genuinely fresh iteration) do you select the substrate from the current invocation.
 
+### 3.1 — Publish the base before fanning out (CRITICAL — do this first)
+
+Feature agents run in **isolated worktrees and cut their branch from `origin/<base>`** (the *remote* base). So **anything not pushed to `origin/<base>` is invisible to them** — the increment scope, the iteration plan, the feature specs (`.devmeta/projects/.../*-spec.md`), the `context-log.md`, and the `.tick/` structure that bootstrap and `plan-iteration` just wrote. A feature agent that branches from a stale `origin/<base>` cannot see its own spec or the increment and will misread or duplicate scope — a real, observed failure mode.
+
+Before launching the build (3.2a) **or** the fallback fan-out (3.2b), and again on any resume that injected new tick/spec state:
+
+1. Read the base from `<increment-dir>/base-branch`; ensure you are on it.
+2. Commit everything the plan produced onto the base (skip if nothing is pending):
+   ```bash
+   git add .devmeta/ .tick/ docs/        # plus any spec/source files the plan wrote
+   git commit -m "Plan iteration <NN.M>: scope, feature specs, tick structure"
+   ```
+3. **Push the base:** `git push origin <base>`.
+4. **Verify origin is current:** `git rev-parse <base> origin/<base>` must print the **same** sha. If they differ, agents would branch from stale state — do **not** fan out until they match.
+
+This is not optional, and it is the first thing Phase 3 does.
+
 ### 3.2 — The flat-manifest → build-args transform (workflow path)
 
 `plan-iteration` emits a **flat** manifest:
@@ -219,8 +236,9 @@ Either path leaves: `tk` updated by the feature agents, one feature branch (and 
    git add .tick/ .devmeta/
    git status --short                 # verify only metadata files staged
    git commit -m "Update .tick/ and .devmeta/ metadata for iteration N"
+   git push origin <base>             # publish base — the NEXT iteration's agents branch from origin/<base>
    ```
-   `.tick/` and `.devmeta/` change during the run but live on base, not in feature PRs — committing them here prevents dozens of dirty files accumulating across iterations. This commit goes directly on base; no PR is needed for metadata-only changes.
+   `.tick/` and `.devmeta/` change during the run but live on base, not in feature PRs — committing them here prevents dozens of dirty files accumulating across iterations. This commit goes directly on base; no PR is needed for metadata-only changes. **Push the base** so `origin/<base>` stays current; the next iteration's worktree agents branch from it, and 3.1 will refuse to proceed if it is stale. (If you merged the feature PRs on GitHub rather than locally, `git pull` the base first so the merge commits and the metadata commit travel together.)
 4. Close the iteration epic N in `tk`. `tk next` → the I&A iteration `NN.1R`.
 
 ## Phase 5: Reflect / I&A (effort: xhigh)
