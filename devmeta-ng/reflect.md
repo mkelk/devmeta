@@ -187,7 +187,7 @@ commits, or modifies tracked state. Fixing is your job in Step 5.
 
 #### Step 4a — Workflow path (opted in)
 
-Launch `workflows/reflect-iteration.workflow.js` with:
+**Do NOT author a workflow script.** Read the reviewed pre-built `~/.claude/commands/devmeta-ng/workflows/reflect-iteration.workflow.js` (absolute path; expand `~`, or prefer a project-local `.claude/commands/devmeta-ng/`), replace the single line marked `// <<< INLINE POINT` with `const input = { … the object below … };`, and launch the edited text via `Workflow({ script: <text> })` — do **not** pass `args` (it does not reliably reach a workflow). If the read fails, surface it; do not hand-author a substitute. The inputs to inline:
 
 ```jsonc
 {
