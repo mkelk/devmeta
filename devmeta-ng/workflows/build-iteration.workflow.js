@@ -177,7 +177,7 @@ function verifyPrompt(featureId, branch, baseBranch, runStamp) {
 // RUNTIME FORM: `export const meta` + this TOP-LEVEL body (NOT `export default`). The
 // runtime injects `args` and (verified) delivers it as a JSON STRING, so parse it
 // defensively — this works whether the launcher passes an object or a stringified object.
-const input = typeof args === "string" ? JSON.parse(args) : (args || {});
+const input = typeof args === "string" ? JSON.parse(args) : (args || {}); // <<< INLINE POINT — /devmeta-ng:go replaces THIS entire line at launch with: const input = { ...build-args... }
   // input (parsed from the injected args) = {
   //   iteration, runStamp, baseBranch, contextLog,
   //   waves: [ [ {featureId, title, description, branch, tasks:[{taskId,title,acceptance,detail}],

@@ -70,7 +70,7 @@ const SKEPTIC_ANGLES = [
 // RUNTIME FORM: `export const meta` + this TOP-LEVEL body (NOT `export default`). The
 // runtime injects `args` and (verified) delivers it as a JSON STRING, so parse it
 // defensively — works whether the launcher passes an object or a stringified object.
-const input = typeof args === "string" ? JSON.parse(args) : (args || {});
+const input = typeof args === "string" ? JSON.parse(args) : (args || {}); // <<< INLINE POINT — /devmeta-ng:reflect replaces THIS entire line at launch with: const input = { ...reflect inputs... }
   // args is devmeta-OWNED. devmeta-ng:reflect reads scope + criteria from the
   // increment _overview.md / iteration scope and gathers the merged ref/diff
   // BEFORE launching this, and passes them in verbatim. Expected shape:

@@ -36,7 +36,7 @@ This loop is **thin**: it owns the increment ledger (in `tk`) and the cross-iter
 
 The work inside an iteration is fanned out one of two ways, chosen per `go` run with no extra questions:
 
-- **Dynamic Workflow (opt-in).** If the invocation arguments contain the **`workflow`** keyword (e.g. `/devmeta-ng:go workflow`), or an **`ultracode`** opt-in is active for this run (surfaced as a system-reminder), Phase 3 emits and launches `workflows/build-iteration.workflow.js`. The workflow is checkpoint-resumable and returns a single per-feature build manifest. This is the **sole launcher** — there is no other place that starts the workflow.
+- **Dynamic Workflow (opt-in).** If the invocation arguments contain the **`workflow`** keyword (e.g. `/devmeta-ng:go workflow`), or an **`ultracode`** opt-in is active for this run (surfaced as a system-reminder), Phase 3 launches the reviewed, pre-built `workflows/build-iteration.workflow.js` — it does **not** author a workflow script (see 3.2a). The workflow is checkpoint-resumable and returns a single per-feature build manifest. This is the **sole launcher** — there is no other place that starts the workflow.
 - **Parallel-Agent fallback.** Otherwise, Phase 3 follows the fallback fan-out procedure documented in `/devmeta-ng:run`: one Agent per feature per wave, with all git/PR/`tk` side effects inside the agents. `run.md` is *only* the documented fallback procedure — never a second workflow launcher.
 
 The ledger, planning, the PR/merge seam, and reflect are byte-for-byte identical on both paths — that is what makes the two engines A/B comparable. The script body of a workflow can never touch the filesystem, shell, or git; only spawned agents can. Phase 3 therefore writes nothing to git/fs itself on the workflow path.
@@ -193,7 +193,14 @@ Field-name law: **`featureId`** (= tk epic id), **`title`**, **`description`**, 
 
 ### 3.2a — OPT-IN → launch the build workflow
 
-Launch `workflows/build-iteration.workflow.js` with the build-args above (the `runStamp` is the only injected timestamp — pass the current ISO time, because the workflow script body cannot read the clock). Wait for its single returned value: the per-feature build manifest (`featureId → { branch, prUrl|"" , tasks[], status, headSha, contextNotes, blockers[] }`). Awaiting each wave's pipeline result is the wave barrier inside the workflow; you simply await the final returned value here.
+**Do NOT write a workflow script.** The build orchestration is the reviewed, smoke-tested `build-iteration.workflow.js`; authoring a fresh one per iteration reintroduces bugs (wrong runtime form; `args` not arriving). Launch the canonical script with the build-args **inlined** — the `args` parameter does NOT reliably reach a workflow, so never depend on it:
+
+1. **Read** the canonical script by absolute path: `~/.claude/commands/devmeta-ng/workflows/build-iteration.workflow.js` (expand `~` to the home dir; if this project has a local `.claude/commands/devmeta-ng/`, prefer that). If the read fails, that is an install problem — surface it; do **not** hand-author a substitute.
+2. In the text you read, find the single line marked `// <<< INLINE POINT` and replace **that entire line** with your build-args as a JS literal (the `runStamp` is the current ISO time — the script body has no clock):
+   `const input = { iteration: "<NN.M>", runStamp: "<ISO now>", baseBranch: "<base>", contextLog: "<path>", waves: [ [ { featureId, title, description, branch, tasks: [ { taskId, title, acceptance, detail } ], test, spec, notes }, … ], … ] };`
+   Change nothing else.
+3. **Launch** the edited text: `Workflow({ script: <the edited text> })`. Do **not** pass `args`; do **not** use `scriptPath` (you edited the text in memory).
+4. Await the single returned value: the per-feature build manifest (`featureId → { branch, prUrl|"" , tasks[], status, headSha, contextNotes, blockers[] }`). Awaiting each wave's pipeline result is the wave barrier inside the script.
 
 ### 3.2b — FALLBACK → parallel feature fan-out
 
