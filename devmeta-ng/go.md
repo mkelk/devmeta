@@ -240,6 +240,13 @@ Either path leaves: `tk` updated by the feature agents, one feature branch (and 
    ```
    `.tick/` and `.devmeta/` change during the run but live on base, not in feature PRs — committing them here prevents dozens of dirty files accumulating across iterations. This commit goes directly on base; no PR is needed for metadata-only changes. **Push the base** so `origin/<base>` stays current; the next iteration's worktree agents branch from it, and 3.1 will refuse to proceed if it is stale. (If you merged the feature PRs on GitHub rather than locally, `git pull` the base first so the merge commits and the metadata commit travel together.)
 4. Close the iteration epic N in `tk`. `tk next` → the I&A iteration `NN.1R`.
+5. **Full typecheck/build ONCE here (not per feature):** after the merges, run the project's full build/typecheck (e.g. `yarn build` / `tsc`) on the base and fix any cross-feature type errors before closing the iteration. Feature agents run only their surgical tests, so this is the single place the whole tree is type-checked — far cheaper than N redundant per-feature builds.
+
+**Integration safety (worktrees + staging — learned the hard way):**
+- **Reconcile tk from the returned build manifest** as a backstop: for each feature, ensure its closed tasks are closed in `tk` on base. Feature agents commit their `.tick/` closures on-branch, but verify after merge — a tk closure left only in a pruned worktree is lost.
+- **Stage only scoped paths** (`git add .tick/ .devmeta/` and named source). **NEVER `git add -A` / `git add .`** during integrate — it sweeps feature worktrees and other untracked files into the commit.
+- **Remove feature worktrees with `git worktree remove <path>`** (or `git worktree prune`). **NEVER `rm -rf` a worktree** — a `node_modules` junction inside it can make `rm -rf` follow back into the parent repo.
+- Ensure the project's `.gitignore` excludes the worktree directory (e.g. `.claude/worktrees/`).
 
 ## Phase 5: Reflect / I&A (effort: xhigh)
 
