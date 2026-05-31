@@ -174,6 +174,7 @@ and work here, in your own worktree).
 3. .devmeta/lessons-learned.md — do not repeat known mistakes
 4. context-log.md — context from sibling/previous features
 5. .devmeta/devmeta.md if present — project test commands and additional rules
+6. **Staleness guard:** if the increment scope or the foundation this feature builds on is NOT present on your branch, your base is stale — STOP, report `blocked: base likely stale`, and do NOT guess scope or conclude the feature is "already shipped".
 
 ## Procedure — per task
 

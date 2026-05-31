@@ -92,8 +92,9 @@ function buildPrompt(feature, ctx) {
     `### Feature description`,
     feature.description,
     ``,
-    `### Feature spec (read it in full before coding)`,
-    feature.spec || "(none — work from the description and tasks below)",
+    `### Feature spec — READ THIS FILE IN FULL before coding`,
+    feature.spec ? `Open and read: ${feature.spec}` : "(none — work from the description and tasks below)",
+    feature.spec ? `If that file does NOT exist on your branch, STOP — the base was not published with the plan and your branch is stale. Do NOT guess, infer, or reconstruct scope, and never conclude the feature is "already done" from a missing spec. Return status "blocked" with a note like "spec missing at ${feature.spec}; base likely stale" and exit.` : "",
     ``,
     `### Tasks — complete IN ORDER (they build on each other)`,
     feature.tasks.map((t, i) =>
