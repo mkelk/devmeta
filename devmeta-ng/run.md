@@ -104,6 +104,18 @@ waves. Dependencies are feature-level only — never task-to-task choreography a
   authoritative base branch from `<increment-dir>/base-branch`. **Never assume `main`.**
   Every feature branches from this base branch.
 
+> **Local / no-remote mode.** If the repo has no usable `origin` (local-only base branch,
+> e.g. a benchmark or air-gapped project), the `git fetch origin` / `origin/<base>` /
+> `git push` / GitHub-PR steps below do NOT apply. Instead: branch each feature from the
+> **local** base (`git checkout -b feature/... <base-branch>`), commit on the feature branch,
+> and integrate with **local `--merge`** (no push, no PR). Also note: the harness
+> `isolation:"worktree"` creates the agent's worktree from the repo's **default** branch,
+> which may NOT be the engine's base branch — so the feature agent MUST verify the increment's
+> foundation is present on its branch and reset/merge onto the real base before building
+> (this is what the Phase-5 staleness guard checks; treat a missing foundation as "wrong base,"
+> not "already shipped"). To avoid the whole class of problem, prefer a base branch that an
+> agent can reach directly, and confirm the worktree's `HEAD` matches `<base-branch>` first.
+
 ### Phase 4: Execute Waves
 
 ```
