@@ -34,19 +34,29 @@ engine integrate without project-specific hardcoding.
 ## Phase contract of `drive-iteration.workflow.js`
 | Phase | Substrate | Output |
 |---|---|---|
-| Plan | 1 agent (schema) | manifest: features[] (owned disjoint files, waves), integrationPoints[] (the contract), acceptanceCriteria[] |
-| Build | `parallel` per wave, worktree isolation | per-feature branch + surgical-test-green |
-| Integrate | 1 agent | merge in wave order + execute contract + combined migration |
-| Gate | `parallel` gate agents + bounded fix loop | typecheck/unit/lint/migrate green |
-| Reflect | `parallel` skeptics vs acceptanceCriteria | verdicts; gaps → `go` |
+| Plan | 1 agent (schema) | manifest: features[] (owned disjoint files, waves, **`testObligations[]`**), integrationPoints[] (the contract), acceptanceCriteria[] |
+| Build | `parallel` per wave, worktree isolation | per-feature branch + **`testsAdded[]` evidence + passing `surgicalOutput`** + `learnings[]` |
+| Integrate | 1 agent | merge in wave order + execute contract + combined migration + `learnings[]` |
+| Gate | `parallel` gate agents + bounded fix loop | typecheck/unit/lint/migrate **+ coverage** green; fix agent returns `learnings[]` |
+| Reflect | `parallel` skeptics | acceptance verdicts **+ test-quality verdicts + code-drift findings** |
+| **Harvest** | 1 agent (Write) | route `learnings[]` to typed homes; narrative `project-history.md`; `ia-cycles/iteration-N.md`; plan-reassessment proposals; minor-drift → next-iter cleanup |
 
-`go` is a thin launcher (pick iteration → inline args → launch → consume → advance), human-gateable at iteration boundaries.
+`go` is a thin launcher (pick iteration → inline args incl. `today` → launch → consume → advance), human-gateable at iteration boundaries.
+
+## v2 — content-quality upgrade (implements `critique-and-improvements.md`)
+The v1 engine hardened *what it checked* but **narrowed** quality: test *authoring* wasn't mandated, and the inside-out half of reflection (drift review + the self-learning harvest) was missing. v2 restores devmeta's bar **in devmeta-3's enforce-in-code idiom**, not as prose:
+- **Tests mandatory, enforced by schema** — `testObligations[]` (Plan) + `minItems`-style `testsAdded[]` evidence (Build) make shipping an untested feature structurally hard; the **coverage gate** can fail; a **test-quality skeptic** catches hollow tests. (critique §2)
+- **Inside-out drift review** — a code-drift skeptic panel reads the merged diff against the ported craftsmanship checklist; majors block, minors become next-iteration cleanup. (critique §3)
+- **Self-learning flywheel** — `learnings[]` on build/integrate/fix returns (the structured replacement for `context-log.md`, preserving one control plane) feed a **Harvest** phase that routes each to a typed durable home with an explicit router, so the next iteration's Plan/Build read it. (critique §4) Engine-scope learnings route to `.devmeta/engine-notes.md`, unfreezing the hand-baked engine lessons. (critique §5.3)
+- **Self-improvement** — plan reassessment on PASS, narrative history, `ia-cycles/` reports. (critique §5)
 
 ## What is proven vs not (be honest)
-- **Proven (this repo, iteration 1.2):** the execution substrate — a single workflow drove plan→build→integrate→gates→reflect to green autonomously, one control plane, no `tk`; agents self-applied project lessons (security_invoker, --no-verify, worktree-base merge, worktree cleanup).
-- **Newly generalized (validate before trusting):** generic Plan (deriving the partition from the spec, not hardcoded) and generic Integrate (executing a *derived* contract, not a hardcoded one). The prototype short-circuited both by hardcoding; this engine moves them into the Plan agent + the integration contract. **The clean-room test is: run on a fresh increment where the partition and wiring were never pre-computed.**
+- **Proven (this repo):** the execution substrate + generic Plan/Integrate drove fresh, unseen increments to green autonomously (Quotes 1.2 hardcoded-prototype; Task-priority clean-room — generic), one control plane, no `tk`.
+- **Newly added in v2 (validate before fully trusting):** the testing obligations, coverage gate, test-quality + drift skeptics, and the Harvest flywheel. The meta-acceptance (critique §10) is the bar: in a 2+ iteration increment, iteration N+1 demonstrably reuses knowledge Harvest filed in N and does not repeat N's non-obvious failures.
 
 ## Known limits
-- Integrate is still a single agent for merge+wire (gates are parallelized; a future split could parallelize wiring per integration point).
+- Integrate is still a single agent for merge+wire (gates and reflect are parallelized; a future split could parallelize wiring per integration point).
+- The coverage gate falls back to file-correspondence when no per-line coverage tool is configured (it `log()`s the fallback — no silent caps).
 - Spec authoring is interactive (headless workflows can't do it) — it stays in `start-increment-spec`.
 - Worktree isolation branches from the repo default branch; build agents must merge the base first (encoded in the build prompt).
+- Harvest's engine-scope learnings are *collected* in `engine-notes.md`; folding them into the workflow prompts is still a human cadence (documented, not yet automated).

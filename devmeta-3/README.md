@@ -19,11 +19,14 @@ See `SPEC.md` for the design rationale and the research it is grounded in.
 
 ## The engine (`workflows/drive-iteration.workflow.js`)
 One generic, project-agnostic workflow drives any iteration:
-1. **Plan** — an agent derives the feature partition from the spec **and declares the integration contract** (the shared files + each feature's contribution). This is the key idea that makes generic integration work: integrate *executes a known contract* instead of guessing seams.
-2. **Build** — one agent per feature per wave, isolated worktrees, disjoint owned files (write-write-free), surgical test per feature.
+1. **Plan** — derives the feature partition from the spec, **declares the integration contract** (shared files + each feature's contribution — what makes generic integration work), and assigns each feature non-empty **`testObligations[]`** (behavior→assertion→kind; typecheck is never a test).
+2. **Build** — one agent per feature per wave, isolated worktrees, disjoint owned files (write-write-free). **Authoring tests is mandatory**: the schema requires `testsAdded[]` evidence + passing `surgicalOutput` — a feature cannot return valid output with no test. Agents also return `learnings[]`.
 3. **Integrate** — merge branches in wave order, **execute the declared integration contract**, generate+apply the combined migration.
-4. **Gate** — typecheck / unit / lint / migrate run as **parallel** gate agents, with a bounded fix loop.
-5. **Reflect** — parallel adversarial skeptics attack the acceptance criteria; gaps surface to `go`.
+4. **Gate** — typecheck / unit / lint / migrate **+ a coverage gate that fails on untested new source**, run in parallel, with a bounded fix loop.
+5. **Reflect** — parallel adversarial skeptics: **acceptance** + **test-quality** (catches hollow/skipped/tautological tests) + an inside-out **code-drift** panel (the ported craftsmanship checklist). Majors block; minors become next-iteration cleanup.
+6. **Harvest** — routes every `learnings[]` item to a typed durable home (`CLAUDE.md` / `docs/current/` / `principles-and-choices.md` / `troubleshooting`|`testing-notes` / `lessons-learned` / `engine-notes`), writes a **narrative** `project-history.md` entry + an `ia-cycles/iteration-N.md` report, and proposes **plan reassessment** of the remaining iterations. This is the self-learning flywheel: iteration N+1 reads what N filed.
+
+See `critique-and-improvements.md` for the spec these v2 quality mechanics implement, and `SPEC.md` for the phase contract.
 
 ## Drop-in compatibility
 Same `.devmeta/` artifacts, same `increment-NN-XXX` directories, same `current-increment.md`. You can author with any generation's `start-increment-spec` and drive with `devmeta-3:go`. devmeta-3 does **not** require or maintain `tk`.

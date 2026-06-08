@@ -1,409 +1,390 @@
 export const meta = {
-  name: "devmeta3-drive-iteration",
-  description:
-    "devmeta-3 generic iteration engine: plan -> parallel build -> integrate (merge+wire) -> parallel gates (+bounded fix) -> adversarial reflect -> gate. One control plane (the workflow journal); no tk.",
+  name: 'devmeta3-drive-iteration',
+  description: 'devmeta-3 generic iteration engine (v2): plan -> parallel build (tests mandatory) -> integrate -> parallel gates incl coverage (+bounded fix) -> adversarial reflect (acceptance + test-quality + drift) -> harvest (route learnings, narrative history, ia-cycle report, plan reassessment). One control plane (journal + .devmeta docs + git); no tk.',
   phases: [
-    {
-      title: "Plan",
-      detail:
-        "derive feature partition + integration contract + acceptance from the spec",
-    },
-    {
-      title: "Build",
-      detail: "one agent per feature per wave, isolated worktrees",
-    },
-    {
-      title: "Integrate",
-      detail: "merge in wave order + execute integration contract + migration",
-    },
-    {
-      title: "Gate",
-      detail: "parallel typecheck/test/lint/migrate, bounded fix loop",
-    },
-    {
-      title: "Reflect",
-      detail: "parallel adversarial skeptics vs acceptance criteria",
-    },
+    { title: 'Plan', detail: 'partition + integration contract + per-feature testObligations + acceptance' },
+    { title: 'Build', detail: 'one agent per feature per wave; MUST author tests (testsAdded evidence)' },
+    { title: 'Integrate', detail: 'merge in wave order + execute integration contract + migration' },
+    { title: 'Gate', detail: 'parallel typecheck/unit/lint/migrate + coverage; bounded fix loop' },
+    { title: 'Reflect', detail: 'parallel skeptics: acceptance + test-quality + code-drift' },
+    { title: 'Harvest', detail: 'route learnings to typed homes; narrative history; ia-cycle report; plan reassessment' },
   ],
-};
+}
 
 // ---------------------------------------------------------------------------
 // RUNTIME FORM: `export const meta` + this TOP-LEVEL body. devmeta-3:go replaces
-// the INLINE POINT line below with a concrete `const input = {...}` literal at launch
-// (the `args` parameter is not reliably delivered to workflows, so go never relies on it).
-//
+// the INLINE POINT line below with a concrete `const input = {...}` literal at launch.
 // input shape:
-//   { increment, iteration, baseBranch, incrementDir, briefPath,
+//   { increment, iteration, baseBranch, incrementDir, briefPath, today,
 //     test: { typecheck, unit, lint, migrateReset } }
 // ---------------------------------------------------------------------------
-const input = typeof args === "object" && args ? args : {}; // <<< INLINE POINT — devmeta-3:go replaces THIS entire line with: const input = { increment, iteration, baseBranch, incrementDir, briefPath, test: {...} }
+const input = typeof args === 'object' && args ? args : {} // <<< INLINE POINT — devmeta-3:go replaces THIS entire line with: const input = { increment, iteration, baseBranch, incrementDir, briefPath, today, test: {...} }
 
-const BASE = input.baseBranch;
-const ITER = input.iteration;
-const DIR = input.incrementDir;
-const BRIEF = input.briefPath || "(no brief; use the increment _overview)";
-const T = input.test || {};
+const BASE = input.baseBranch
+const ITER = input.iteration
+const DIR = input.incrementDir
+const BRIEF = input.briefPath || '(no brief; use the increment _overview)'
+const TODAY = input.today || '(unknown; do not date-stamp)'
+const T = input.test || {}
 
-// ----- schemas -----
-const MANIFEST_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: [
-    "iteration",
-    "features",
-    "integrationPoints",
-    "acceptanceCriteria",
-  ],
+// ----------------------------- schemas -----------------------------
+const TEST_OBLIGATION = {
+  type: 'object', additionalProperties: false,
+  required: ['behavior', 'assertion', 'kind'],
   properties: {
-    iteration: { type: "string" },
+    behavior: { type: 'string' },
+    assertion: { type: 'string' },
+    kind: { type: 'string', enum: ['unit', 'component', 'integration', 'migration', 'e2e'] },
+  },
+}
+const MANIFEST_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['iteration', 'features', 'integrationPoints', 'acceptanceCriteria'],
+  properties: {
+    iteration: { type: 'string' },
     features: {
-      type: "array",
+      type: 'array',
       items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "name",
-          "wave",
-          "dependsOn",
-          "scope",
-          "ownedFiles",
-          "surgicalTest",
-        ],
+        type: 'object', additionalProperties: false,
+        required: ['name', 'wave', 'dependsOn', 'scope', 'ownedFiles', 'testObligations', 'surgicalCmd'],
         properties: {
-          name: { type: "string" },
-          wave: { type: "integer" },
-          dependsOn: { type: "array", items: { type: "string" } },
-          scope: { type: "string" },
-          ownedFiles: { type: "array", items: { type: "string" } },
-          surgicalTest: { type: "string" },
+          name: { type: 'string' },
+          wave: { type: 'integer' },
+          dependsOn: { type: 'array', items: { type: 'string' } },
+          scope: { type: 'string' },
+          ownedFiles: { type: 'array', items: { type: 'string' } },
+          testObligations: { type: 'array', items: TEST_OBLIGATION },
+          untestableJustification: { type: 'string' },
+          surgicalCmd: { type: 'string' },
         },
       },
     },
     integrationPoints: {
-      type: "array",
+      type: 'array',
       items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["file", "contributions"],
+        type: 'object', additionalProperties: false,
+        required: ['file', 'contributions'],
         properties: {
-          file: { type: "string" },
+          file: { type: 'string' },
           contributions: {
-            type: "array",
+            type: 'array',
             items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["feature", "change"],
-              properties: {
-                feature: { type: "string" },
-                change: { type: "string" },
-              },
+              type: 'object', additionalProperties: false,
+              required: ['feature', 'change'],
+              properties: { feature: { type: 'string' }, change: { type: 'string' } },
             },
           },
         },
       },
     },
-    acceptanceCriteria: { type: "array", items: { type: "string" } },
+    acceptanceCriteria: { type: 'array', items: { type: 'string' } },
   },
-};
-const BUILD_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["feature", "branch", "committed", "status"],
-  properties: {
-    feature: { type: "string" },
-    branch: { type: "string" },
-    committed: { type: "boolean" },
-    headSha: { type: "string" },
-    status: { type: "string", enum: ["ok", "partial", "failed"] },
-    surgicalTest: { type: "string" },
-    notes: { type: "string" },
-  },
-};
-const INTEGRATE_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["merged", "headSha", "status"],
-  properties: {
-    merged: { type: "boolean" },
-    headSha: { type: "string" },
-    migration: { type: "string" },
-    status: { type: "string", enum: ["ok", "conflicts", "failed"] },
-    notes: { type: "string" },
-  },
-};
-const GATE_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["gate", "pass"],
-  properties: {
-    gate: { type: "string" },
-    pass: { type: "boolean" },
-    output: { type: "string" },
-  },
-};
-const VERDICT_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["criterion", "pass", "findings"],
-  properties: {
-    criterion: { type: "string" },
-    pass: { type: "boolean" },
-    severity: { type: "string", enum: ["none", "minor", "major", "blocker"] },
-    findings: { type: "array", items: { type: "string" } },
-  },
-};
-
-// =================== PHASE 1: PLAN (derive the partition + integration contract) ===================
-phase("Plan");
-log(
-  "devmeta3: planning iteration " +
-    ITER +
-    " — deriving partition + integration contract from the spec",
-);
-const planPrompt = [
-  "You are the PLAN phase of the devmeta-3 engine. Repo cwd is the project root, base branch " +
-    BASE +
-    ".",
-  "Read these for scope: " +
-    DIR +
-    "/_overview.md (the section for iteration " +
-    ITER +
-    ', its deliverables and "Verify on screen"), the brief ' +
-    BRIEF +
-    ", .devmeta/lessons-learned.md, .devmeta/devmeta.md, and CLAUDE.md/AGENTS.md. Inspect the codebase enough to choose real file paths and mirror existing conventions.",
-  "Partition iteration " +
-    ITER +
-    " into INDEPENDENT features under these NON-NEGOTIABLE constraints:",
-  "- Maximize the parallel frontier (fewer, wider waves). Wave-1 features have dependsOn [].",
-  "- WRITE-WRITE INVARIANT: no file may be in two features' ownedFiles. If a file must be touched by >1 feature, it is an INTEGRATION POINT — do NOT put it in any feature; instead each feature EXPORTS its piece in its own owned file, and you record the wiring in integrationPoints.",
-  "- Extract shared types/schema/config into a wave-1 foundation feature that the others depend on.",
-  "- Each feature must fit comfortably in one agent session (~200k context). Split larger; merge trivial.",
-  'INTEGRATION CONTRACT: integrationPoints is the list of shared files the integrate phase (not the build agents) will edit. For each, list contributions = which feature contributes what change (e.g. {feature:"x", change:"register <Resource name=...> in CRM.tsx"} or {feature:"y", change:"wire <Widget/> into Dashboard.tsx"} or {feature:"z", change:"add fakerest lifecycle callback + getList branch"}). Be specific enough that integrate can execute it without re-deriving scope.',
-  'ACCEPTANCE: lift the iteration\'s "Verify on screen" bullets into acceptanceCriteria (the bar reflect will attack). Each must be checkable.',
-  'Give every feature a SURGICAL test command (a single fast unit test for its core logic; if a feature is pure UI/schema with no unit, use "' +
-    (T.typecheck || "npm run typecheck") +
-    '").',
-  "Output ONLY the structured manifest. Do NOT write any code or files in this phase.",
-].join("\n");
-const plan = await agent(planPrompt, {
-  schema: MANIFEST_SCHEMA,
-  label: "plan:" + ITER,
-  phase: "Plan",
-});
-
-// group features into waves
-const waves = [];
-for (const f of plan.features) {
-  const w = f.wave || 1;
-  if (!waves[w]) waves[w] = [];
-  waves[w].push(f);
 }
-const integrationFiles = plan.integrationPoints.map((p) => p.file);
-log(
-  "devmeta3: plan = " +
-    plan.features.length +
-    " features across " +
-    waves.filter(Boolean).length +
-    " wave(s); " +
-    plan.integrationPoints.length +
-    " integration point(s); " +
-    plan.acceptanceCriteria.length +
-    " acceptance criteria",
-);
+const LEARNING = {
+  type: 'object', additionalProperties: false,
+  required: ['insight', 'scope'],
+  properties: {
+    insight: { type: 'string' },
+    scope: { type: 'string', enum: ['project', 'engine'] },
+    suggestedHome: { type: 'string' },
+  },
+}
+const BUILD_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['feature', 'branch', 'committed', 'status', 'testsAdded'],
+  properties: {
+    feature: { type: 'string' },
+    branch: { type: 'string' },
+    committed: { type: 'boolean' },
+    headSha: { type: 'string' },
+    status: { type: 'string', enum: ['ok', 'partial', 'failed'] },
+    testsAdded: {
+      type: 'array',
+      items: {
+        type: 'object', additionalProperties: false,
+        required: ['file', 'testName', 'coversBehavior'],
+        properties: {
+          file: { type: 'string' },
+          testName: { type: 'string' },
+          coversBehavior: { type: 'string' },
+        },
+      },
+    },
+    surgicalOutput: { type: 'string' },
+    learnings: { type: 'array', items: LEARNING },
+    notes: { type: 'string' },
+  },
+}
+const INTEGRATE_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['merged', 'headSha', 'status'],
+  properties: {
+    merged: { type: 'boolean' },
+    headSha: { type: 'string' },
+    migration: { type: 'string' },
+    status: { type: 'string', enum: ['ok', 'conflicts', 'failed'] },
+    learnings: { type: 'array', items: LEARNING },
+    notes: { type: 'string' },
+  },
+}
+const GATE_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['gate', 'pass'],
+  properties: { gate: { type: 'string' }, pass: { type: 'boolean' }, output: { type: 'string' } },
+}
+const VERDICT_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['subject', 'pass', 'findings'],
+  properties: {
+    subject: { type: 'string' },
+    pass: { type: 'boolean' },
+    severity: { type: 'string', enum: ['none', 'minor', 'major', 'blocker'] },
+    findings: { type: 'array', items: { type: 'string' } },
+  },
+}
+const DRIFT_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['findings'],
+  properties: {
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object', additionalProperties: false,
+        required: ['file', 'kind', 'severity', 'why', 'fix'],
+        properties: {
+          file: { type: 'string' },
+          kind: { type: 'string' },
+          severity: { type: 'string', enum: ['minor', 'major', 'blocker'] },
+          why: { type: 'string' },
+          fix: { type: 'string' },
+        },
+      },
+    },
+  },
+}
+const HARVEST_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['filed', 'reportPath', 'committed'],
+  properties: {
+    filed: {
+      type: 'array',
+      items: {
+        type: 'object', additionalProperties: false,
+        required: ['home', 'item'],
+        properties: { home: { type: 'string' }, item: { type: 'string' } },
+      },
+    },
+    reportPath: { type: 'string' },
+    reassessment: { type: 'array', items: { type: 'string' } },
+    cleanupForNextIteration: { type: 'array', items: { type: 'string' } },
+    committed: { type: 'boolean' },
+    notes: { type: 'string' },
+  },
+}
 
-// =================== PHASE 2: BUILD (parallel per wave, isolated worktrees) ===================
-phase("Build");
-const built = [];
+// =================== PHASE 1: PLAN ===================
+phase('Plan')
+log('devmeta3: planning iteration ' + ITER + ' — partition + integration contract + per-feature test obligations')
+const planPrompt = [
+  'You are the PLAN phase of the devmeta-3 engine. cwd is the project root; base branch ' + BASE + '.',
+  'Read for scope: ' + DIR + '/_overview.md (the section for iteration ' + ITER + ': its deliverables, "Verify on screen", and "Testing delivered"), the brief ' + BRIEF + ', and CLAUDE.md/AGENTS.md. Inspect the codebase to choose real paths and mirror conventions.',
+  'Read for KNOWN FAILURE MODES before partitioning (pre-empt them in feature scopes and test obligations): .devmeta/lessons-learned.md, .devmeta/devmeta.md, and if present docs/current/troubleshooting.md, .devmeta/testing-notes.md, docs/current/principles-and-choices.md.',
+  'Partition iteration ' + ITER + ' into INDEPENDENT features (NON-NEGOTIABLE):',
+  '- Maximize the parallel frontier; wave-1 features have dependsOn []. WRITE-WRITE INVARIANT: no file in two features\' ownedFiles. A file >1 feature must touch is an INTEGRATION POINT (not owned by any feature) recorded in integrationPoints with each feature\'s contribution. Extract shared types/schema/config into a wave-1 foundation feature.',
+  'TEST OBLIGATIONS (mandatory): give EVERY feature a non-empty testObligations[] derived from its slice of the deliverables + "Verify on screen" + "Testing delivered". Each is {behavior, assertion, kind}. typecheck is NOT a test. Test modality by kind: UI/presentational -> component/render/interaction test (the project component-test cmd); schema/migration -> a round-trip or migrate-apply test; pure types/config -> a typed-contract test that imports and exercises the contract (never bare typecheck). A feature you cannot name a single behavioral assertion for is mis-cut: split or merge it. ONLY if a feature genuinely has no testable behavior, return testObligations: [] WITH untestableJustification set (go surfaces this to a human).',
+  'Give each feature surgicalCmd: the single fast command that runs THAT feature\'s tests (resolve real commands from .devmeta/devmeta.md > Testing).',
+  'INTEGRATION CONTRACT: integrationPoints[] = shared files the integrate phase edits; each contribution = {feature, change} specific enough to execute without re-deriving scope (e.g. "register <Resource name=x>", "wire <Widget/> into Dashboard.tsx", "add fakerest getList branch + beforeCreate default").',
+  'ACCEPTANCE: lift the iteration\'s "Verify on screen" into acceptanceCriteria[] (each checkable).',
+  'Output ONLY the structured manifest. Write no code in this phase.',
+].join('\n')
+const plan = await agent(planPrompt, { schema: MANIFEST_SCHEMA, label: 'plan:' + ITER, phase: 'Plan' })
+
+const waves = []
+for (const f of plan.features) {
+  const w = f.wave || 1
+  if (!waves[w]) waves[w] = []
+  waves[w].push(f)
+}
+const integrationFiles = plan.integrationPoints.map((p) => p.file)
+const untestable = plan.features.filter((f) => (f.testObligations || []).length === 0)
+if (untestable.length) log('devmeta3: WARNING — features with no test obligations (human review): ' + untestable.map((f) => f.name + ' [' + (f.untestableJustification || 'NO JUSTIFICATION') + ']').join('; '))
+log('devmeta3: plan = ' + plan.features.length + ' features / ' + waves.filter(Boolean).length + ' wave(s); ' + plan.integrationPoints.length + ' integration point(s); ' + plan.acceptanceCriteria.length + ' acceptance criteria')
+
+// =================== PHASE 2: BUILD (tests mandatory) ===================
+phase('Build')
+const built = []
 for (let w = 1; w < waves.length; w++) {
-  const wave = waves[w];
-  if (!wave || !wave.length) continue;
-  log(
-    "devmeta3: build wave " +
-      w +
-      " — " +
-      wave.map((f) => f.name).join(", ") +
-      " (parallel)",
-  );
+  const wave = waves[w]
+  if (!wave || !wave.length) continue
+  log('devmeta3: build wave ' + w + ' — ' + wave.map((f) => f.name).join(', ') + ' (parallel)')
   const thunks = wave.map((f) => () => {
     const prompt = [
-      'You are a BUILD agent in the devmeta-3 engine, building feature "' +
-        f.name +
-        '" of iteration ' +
-        ITER +
-        ". You are in an ISOLATED WORKTREE.",
-      "CRITICAL BASE: the harness branches your worktree from the repo DEFAULT branch, which may LACK this increment's prior work. FIRST run: git merge " +
-        BASE +
-        " --no-edit  and verify the foundation it depends on is present. Then create + commit on a branch named exactly: feature/devmeta3-" +
-        ITER +
-        "-" +
-        f.name,
-      "Scope: " + f.scope,
-      "Your OWNED files (build ONLY these): " + JSON.stringify(f.ownedFiles),
-      "INTEGRATION POINTS you must NOT touch (the integrate phase wires them): " +
-        JSON.stringify(integrationFiles) +
-        ". Instead, EXPORT whatever the integrate phase needs to wire (a component, a provider method, a schema object) from your own owned files.",
-      "Read the brief " +
-        BRIEF +
-        ", .devmeta/lessons-learned.md, and mirror existing project conventions. Do NOT generate DB migrations (integrate owns the combined migration).",
-      "Run your surgical test ( " +
-        f.surgicalTest +
-        " ) until green if it resolves; note it if tooling is unavailable in the worktree. Commit with git commit --no-verify (restore any hook-regenerated files afterward). Return the structured result with the ACTUAL branch name.",
-    ].join("\n");
-    return agent(prompt, {
-      schema: BUILD_SCHEMA,
-      isolation: "worktree",
-      label: "build:" + f.name,
-      phase: "Build",
-    });
-  });
-  const res = (await parallel(thunks)).filter(Boolean);
-  for (const r of res) built.push(r);
+      'You are a BUILD agent in the devmeta-3 engine, building feature "' + f.name + '" of iteration ' + ITER + '. You are in an ISOLATED WORKTREE.',
+      'CRITICAL BASE: the harness branches your worktree from the repo DEFAULT branch, which may LACK this increment\'s prior work. FIRST run: git merge ' + BASE + ' --no-edit  and verify the foundation it depends on is present. Then create + commit on a branch named exactly: feature/devmeta3-' + ITER + '-' + f.name,
+      'Scope: ' + f.scope,
+      'Your OWNED files (build ONLY these): ' + JSON.stringify(f.ownedFiles),
+      'INTEGRATION POINTS you must NOT touch (integrate wires them): ' + JSON.stringify(integrationFiles) + '. Instead EXPORT whatever integrate needs (a component, a provider method, a schema object) from your own owned files.',
+      'TESTS ARE MANDATORY. Your test obligations: ' + JSON.stringify(f.testObligations) + '. For EACH obligation, WRITE a real test (its kind tells you the sort) in your owned files, then run  ' + f.surgicalCmd + '  until green. devmeta rule applies: tests are your responsibility — write them, run them, fix them; never defer. You may NOT return an empty testsAdded, substitute typecheck for a test, or skip a test. If a test genuinely cannot run in the worktree (missing service), still WRITE it and say so in notes — do not delete or .skip it.',
+      'Return testsAdded[] mapping each test {file,testName,coversBehavior} to a real obligation behavior, and paste the passing test-run tail into surgicalOutput (proof, not a claim).',
+      'Capture learnings[]: anything non-obvious you discovered (scope:"project" for repo facts; scope:"engine" for things that should change the devmeta-3 workflow itself), each with a suggestedHome.',
+      'Read the brief ' + BRIEF + ' and .devmeta/lessons-learned.md; mirror project conventions. Do NOT generate DB migrations (integrate owns the combined migration). Commit with git commit --no-verify (restore any hook-regenerated files). Return the structured result with the ACTUAL branch name.',
+    ].join('\n')
+    return agent(prompt, { schema: BUILD_SCHEMA, isolation: 'worktree', label: 'build:' + f.name, phase: 'Build' })
+  })
+  const res = (await parallel(thunks)).filter(Boolean)
+  for (const r of res) built.push(r)
 }
+const noTests = built.filter((b) => !(b.testsAdded || []).length)
+if (noTests.length) log('devmeta3: WARNING — features returned with NO testsAdded: ' + noTests.map((b) => b.feature).join(', '))
 
-// =================== PHASE 3: INTEGRATE (merge in wave order + execute the integration contract) ===================
-phase("Integrate");
-log(
-  "devmeta3: integrate — merge " +
-    built.length +
-    " branches in wave order + execute integration contract",
-);
-const orderedBranches = [];
+// =================== PHASE 3: INTEGRATE ===================
+phase('Integrate')
+log('devmeta3: integrate — merge ' + built.length + ' branches in wave order + execute integration contract')
+const orderedBranches = []
 for (let w = 1; w < waves.length; w++) {
-  if (!waves[w]) continue;
+  if (!waves[w]) continue
   for (const f of waves[w]) {
-    const b = built.find((x) => x.feature === f.name);
-    if (b && b.branch) orderedBranches.push(b.branch);
+    const b = built.find((x) => x.feature === f.name)
+    if (b && b.branch) orderedBranches.push(b.branch)
   }
 }
 const integratePrompt = [
-  "You are the INTEGRATE phase of the devmeta-3 engine. Run: git checkout " +
-    BASE +
-    "  first.",
-  "Merge these feature branches into " +
-    BASE +
-    " IN THIS ORDER (wave/dependency order) with git merge --no-ff --no-edit <branch>: " +
-    JSON.stringify(orderedBranches) +
-    ". Features own disjoint files so merges should be clean; if a conflict appears, keep both sides' additions.",
-  "Then EXECUTE THE INTEGRATION CONTRACT — edit each shared file per its contributions:",
+  'You are the INTEGRATE phase of the devmeta-3 engine. Run: git checkout ' + BASE + '  first.',
+  'Merge these feature branches into ' + BASE + ' IN THIS ORDER with git merge --no-ff --no-edit <branch>: ' + JSON.stringify(orderedBranches) + '. Disjoint files -> clean merges; on conflict keep both sides\' additions.',
+  'EXECUTE THE INTEGRATION CONTRACT — edit each shared file per its contributions:',
   JSON.stringify(plan.integrationPoints, null, 0),
-  "For each integration point, open the file and apply every listed contribution (import + wire the exported pieces the build agents created). Keep edits minimal and consistent with existing patterns.",
-  "If any feature changed the declarative DB schema, generate the combined migration with ( " +
-    (T.migrateReset
-      ? "the project migration-diff command"
-      : "the project migration tooling") +
-    " ) and apply it. IMPORTANT (from .devmeta/lessons-learned.md): the diff tool may DROP view options like `with (security_invoker = on)` and grants — re-add them to the generated migration. Do not hand-edit unrelated migrations.",
-  "Clean up: git worktree remove --force each worktree under .claude/worktrees and git worktree prune; ensure .claude/worktrees/ is gitignored.",
-  'Stage ONLY the integration files + migration you changed (never git add -A), then commit with git commit --no-verify -m "devmeta3 integrate iteration ' +
-    ITER +
-    '" (restore any hook-regenerated files). Do NOT run the full gate suite here (the Gate phase does that).',
-  "Return the structured integrate result with the head sha.",
-].join("\n");
-const integrate = await agent(integratePrompt, {
-  schema: INTEGRATE_SCHEMA,
-  label: "integrate:" + ITER,
-  phase: "Integrate",
-});
+  'For each integration point, open the file and apply every listed contribution (import + wire the exported pieces). Keep edits minimal and idiomatic.',
+  'If any feature changed the declarative DB schema, generate the combined migration and apply it. From .devmeta/lessons-learned.md: the diff tool may DROP view options (with security_invoker = on) and grants — re-add them in the generated migration. Do not hand-edit unrelated migrations.',
+  'Clean up: git worktree remove --force each worktree under .claude/worktrees and git worktree prune; ensure .claude/worktrees/ is gitignored.',
+  'Stage ONLY the integration files + migration you changed (never git add -A), then commit with git commit --no-verify -m "devmeta3 integrate iteration ' + ITER + '" (restore hook-regenerated files). Do NOT run the gate suite here (the Gate phase does).',
+  'Capture learnings[] (wiring gotchas, migration-diff drops, etc.) with scope + suggestedHome. Return the structured integrate result with the head sha.',
+].join('\n')
+const integrate = await agent(integratePrompt, { schema: INTEGRATE_SCHEMA, label: 'integrate:' + ITER, phase: 'Integrate' })
 
-// =================== PHASE 4: GATE (parallel) + bounded fix loop ===================
-phase("Gate");
-const gateDefs = [
-  { gate: "typecheck", cmd: T.typecheck },
-  { gate: "unit", cmd: T.unit },
-  { gate: "lint", cmd: T.lint },
-  { gate: "migrate", cmd: T.migrateReset },
-].filter((g) => g.cmd);
+// =================== PHASE 4: GATE (parallel + coverage + bounded fix) ===================
+phase('Gate')
+const cmdGates = [
+  { gate: 'typecheck', cmd: T.typecheck },
+  { gate: 'unit', cmd: T.unit },
+  { gate: 'lint', cmd: T.lint },
+  { gate: 'migrate', cmd: T.migrateReset },
+].filter((g) => g.cmd)
+const allTestsAdded = built.flatMap((b) => (b.testsAdded || []).map((t) => t.file))
 
 async function runGates(roundLabel) {
-  const thunks = gateDefs.map(
-    (g) => () =>
-      agent(
-        "You are a GATE agent in the devmeta-3 engine. On branch " +
-          BASE +
-          ", run EXACTLY this command in the FOREGROUND and report the result: " +
-          g.cmd +
-          " . Set pass=true only if it succeeds with no errors (for lint, pre-existing repo-wide Prettier/CRLF failures are NOT your concern — judge only ESLint errors; for migrate, the trailing vector/ListVectorBuckets 404 is a cosmetic CLI error, not a failure). Put the last ~15 lines in output. Read-only except running the command. gate label: " +
-          g.gate,
-        {
-          schema: GATE_SCHEMA,
-          label: "gate:" + g.gate + roundLabel,
-          phase: "Gate",
-        },
-      ),
-  );
-  return (await parallel(thunks)).filter(Boolean);
-}
-
-let gates = await runGates("");
-let red = gates.filter((g) => !g.pass);
-let fixRound = 0;
-while (red.length && fixRound < 2) {
-  fixRound++;
-  log(
-    "devmeta3: " +
-      red.length +
-      " gate(s) red — fix round " +
-      fixRound +
-      ": " +
-      red.map((g) => g.gate).join(", "),
-  );
-  const fixPrompt = [
-    "You are a FIX agent in the devmeta-3 engine, iteration " +
-      ITER +
-      ", on branch " +
-      BASE +
-      ". The following gates FAILED:",
-    red.map((g) => "### " + g.gate + "\n" + (g.output || "")).join("\n\n"),
-    'Diagnose and FIX the root cause across the merged code (do not weaken tests or skip checks). Re-run each failed command to confirm green. Commit the fix with git commit --no-verify -m "devmeta3 fix iteration ' +
-      ITER +
-      " (round " +
-      fixRound +
-      ')" (restore hook-regenerated files). Report what you changed.',
-  ].join("\n");
-  await agent(fixPrompt, { label: "fix:r" + fixRound, phase: "Gate" });
-  gates = await runGates(":r" + fixRound);
-  red = gates.filter((g) => !g.pass);
-}
-
-// =================== PHASE 5: REFLECT (adversarial skeptics vs acceptance) ===================
-phase("Reflect");
-log(
-  "devmeta3: reflect — " +
-    plan.acceptanceCriteria.length +
-    " adversarial skeptics",
-);
-const verdictThunks = plan.acceptanceCriteria.map(
-  (c) => () =>
+  const cmdThunks = cmdGates.map((g) => () =>
     agent(
-      "You are an ADVERSARIAL SKEPTIC in the devmeta-3 reflect phase. On branch " +
-        BASE +
-        ", REFUTE that this acceptance criterion for iteration " +
-        ITER +
-        ' is genuinely met IN THE CODE: "' +
-        c +
-        '". Read the actual implementation/test files; cite file:line. Set pass=true ONLY if the criterion is truly satisfied by code you read (not by assumption). Return the structured verdict.',
-      { schema: VERDICT_SCHEMA, label: "reflect", phase: "Reflect" },
-    ),
-);
-const verdicts = (await parallel(verdictThunks)).filter(Boolean);
-const gaps = verdicts.filter((v) => !v.pass);
-const gatesPass = red.length === 0;
+      'You are a GATE agent in devmeta-3. On branch ' + BASE + ', run EXACTLY this in the FOREGROUND and report: ' + g.cmd + ' . pass=true only if it succeeds with no errors (lint: ignore pre-existing repo-wide Prettier/CRLF noise, judge only ESLint errors; migrate: a trailing vector/ListVectorBuckets 404 is cosmetic). Put the last ~15 lines in output. gate=' + g.gate,
+      { schema: GATE_SCHEMA, label: 'gate:' + g.gate + roundLabel, phase: 'Gate' },
+    )
+  )
+  const coverageThunk = () =>
+    agent(
+      [
+        'You are the COVERAGE gate agent in devmeta-3 (this gate can FAIL the iteration — it verifies new code is tested, not just that the suite is green). On branch ' + BASE + ':',
+        '1. Compute the iteration source diff: git diff --name-only ' + BASE + ' (vs the merge-base with the repo default branch if needed) limited to NON-TEST source files added/changed this iteration.',
+        '2. The tests authored this iteration are: ' + JSON.stringify(allTestsAdded) + '. For EACH new/changed source file, confirm a test exercises it — prefer a real coverage tool if the project has one; else use file-correspondence (new src/foo.ts expects a test referencing foo). ',
+        '3. pass=false if any new/changed source file has no covering test. List uncovered files in output. If you fell back to file-correspondence (no coverage tool), SAY SO in output (no silent caps).',
+        'gate=coverage',
+      ].join('\n'),
+      { schema: GATE_SCHEMA, label: 'gate:coverage' + roundLabel, phase: 'Gate' },
+    )
+  return (await parallel(cmdThunks.concat([coverageThunk]))).filter(Boolean)
+}
 
-log(
-  "devmeta3 iteration " +
-    ITER +
-    " done. gates=" +
-    (gatesPass ? "GREEN" : "RED") +
-    " reflect=" +
-    (gaps.length === 0 ? "CLEAN" : gaps.length + " gap(s)"),
-);
+let gates = await runGates('')
+let red = gates.filter((g) => !g.pass)
+let fixRound = 0
+const fixLearnings = []
+while (red.length && fixRound < 2) {
+  fixRound++
+  log('devmeta3: ' + red.length + ' gate(s) red — fix round ' + fixRound + ': ' + red.map((g) => g.gate).join(', '))
+  const fixPrompt = [
+    'You are a FIX agent in devmeta-3, iteration ' + ITER + ', branch ' + BASE + '. These gates FAILED:',
+    red.map((g) => '### ' + g.gate + '\n' + (g.output || '')).join('\n\n'),
+    'Diagnose and FIX the root cause (do NOT weaken tests, skip checks, or delete source to satisfy coverage — add the missing tests instead). Re-run each failed command to confirm green. Commit with git commit --no-verify -m "devmeta3 fix iteration ' + ITER + ' (round ' + fixRound + ')" (restore hook-regenerated files). Capture learnings[] about what the failure taught (scope + suggestedHome). Report what you changed and the learnings.',
+  ].join('\n')
+  const fix = await agent(fixPrompt, { schema: { type: 'object', additionalProperties: false, required: ['summary'], properties: { summary: { type: 'string' }, learnings: { type: 'array', items: LEARNING } } }, label: 'fix:r' + fixRound, phase: 'Gate' })
+  if (fix && fix.learnings) for (const l of fix.learnings) fixLearnings.push(l)
+  gates = await runGates(':r' + fixRound)
+  red = gates.filter((g) => !g.pass)
+}
+const gatesPass = red.length === 0
+
+// =================== PHASE 5: REFLECT (acceptance + test-quality + drift) ===================
+phase('Reflect')
+log('devmeta3: reflect — acceptance(' + plan.acceptanceCriteria.length + ') + test-quality(' + built.length + ') + drift')
+const acceptanceThunks = plan.acceptanceCriteria.map((c) => () =>
+  agent(
+    'You are an ADVERSARIAL ACCEPTANCE SKEPTIC in devmeta-3 reflect. On branch ' + BASE + ', REFUTE that this acceptance criterion for iteration ' + ITER + ' is met IN THE CODE: "' + c + '". Read the actual impl/test files; cite file:line. pass=true ONLY if truly satisfied. subject="acceptance: ' + c.slice(0, 60) + '". Return the verdict.',
+    { schema: VERDICT_SCHEMA, label: 'reflect:accept', phase: 'Reflect' },
+  )
+)
+const testQualityThunks = built.filter((b) => (b.testsAdded || []).length).map((b) => () =>
+  agent(
+    'You are a TEST-QUALITY SKEPTIC in devmeta-3 reflect. Feature "' + b.feature + '" claims testsAdded: ' + JSON.stringify(b.testsAdded) + '. On branch ' + BASE + ', READ those test files. REFUTE that they genuinely exercise the behavior: look for skipped/only/todo tests, vacuous/tautological assertions (expect(true)), mocks that stub the logic under test, or assertions that would pass against a no-op implementation. Cite test file:line. pass=true ONLY if the tests would FAIL against a broken implementation. subject="test-quality: ' + b.feature + '". Return the verdict.',
+    { schema: VERDICT_SCHEMA, label: 'reflect:testq', phase: 'Reflect' },
+  )
+)
+const driftThunk = () =>
+  agent(
+    [
+      'You are a CODE-DRIFT SKEPTIC in devmeta-3 reflect (this is the inside-out craftsmanship review). On branch ' + BASE + ', read the iteration diff (git diff against the merge-base with the repo default branch, or the per-feature commits). Flag craftsmanship problems against THIS checklist:',
+      '- deeply nested try/catch or error suppression; monkey-patching/runtime mutation; copy-pasted blocks with slight variations; config flags that only paper over bugs; TODO/HACK/FIXME/workaround comments; wrapper functions that only paper over a layer; patterns that do not match the codebase; excessive defensive coding; dependencies added for a problem that should not need one; tests that skip or assert too broadly.',
+      'For each finding return {file, kind (from the checklist), severity (minor|major|blocker), why, fix}. Be concrete and cite paths. Empty findings is allowed if the diff is clean.',
+    ].join('\n'),
+    { schema: DRIFT_SCHEMA, label: 'reflect:drift', phase: 'Reflect' },
+  )
+
+const reflectResults = await parallel(acceptanceThunks.concat(testQualityThunks).concat([driftThunk]))
+const verdicts = reflectResults.slice(0, acceptanceThunks.length + testQualityThunks.length).filter(Boolean)
+const driftResult = reflectResults[reflectResults.length - 1] || { findings: [] }
+const driftFindings = (driftResult && driftResult.findings) || []
+
+const failedVerdicts = verdicts.filter((v) => !v.pass)
+const driftBlocking = driftFindings.filter((f) => f.severity === 'blocker' || f.severity === 'major')
+const driftMinor = driftFindings.filter((f) => f.severity === 'minor')
+const reflectClean = failedVerdicts.length === 0 && driftBlocking.length === 0
+const outcome = gatesPass && reflectClean ? 'PASS' : 'NEEDS_WORK'
+log('devmeta3: gates=' + (gatesPass ? 'GREEN' : 'RED') + ' acceptance/test-quality fails=' + failedVerdicts.length + ' drift major+=' + driftBlocking.length + ' minor=' + driftMinor.length + ' -> ' + outcome)
+
+// =================== PHASE 6: HARVEST (route learnings + memory + reassessment) ===================
+phase('Harvest')
+const allLearnings = []
+for (const b of built) for (const l of (b.learnings || [])) allLearnings.push(l)
+for (const l of (integrate.learnings || [])) allLearnings.push(l)
+for (const l of fixLearnings) allLearnings.push(l)
+log('devmeta3: harvest — routing ' + allLearnings.length + ' learning(s), narrative history, ia-cycle report' + (driftMinor.length ? ', ' + driftMinor.length + ' minor-drift cleanup item(s)' : ''))
+const harvestPrompt = [
+  'You are the HARVEST phase of the devmeta-3 engine — the running-knowledge upgrade. cwd = project root, branch ' + BASE + '. Today is ' + TODAY + '. You have Edit/Write/Bash. iteration ' + ITER + ' outcome=' + outcome + '.',
+  'INPUTS:',
+  '- learnings (build+integrate+fix): ' + JSON.stringify(allLearnings),
+  '- drift findings: ' + JSON.stringify(driftFindings),
+  '- failed reflect verdicts: ' + JSON.stringify(failedVerdicts.map((v) => ({ subject: v.subject, findings: v.findings }))),
+  '- gate outputs (tails): ' + JSON.stringify(gates.map((g) => ({ gate: g.gate, pass: g.pass }))),
+  '- tests authored: ' + JSON.stringify(built.flatMap((b) => (b.testsAdded || []))),
+  '- remaining iterations: read ' + DIR + '/_overview.md Iteration Map (rows not DONE).',
+  'TASKS (write the files; you may commit with git commit --no-verify at the end):',
+  '1. ROUTE each learning + recurring gate/drift issue to its typed HOME and WRITE it there: CLAUDE.md Critical Rules (how agents should write code — would prevent a mistake at session start); docs/current/<file> (how the codebase works); docs/current/principles-and-choices.md (a decision proven wrong/nuanced — stamp "Updated ' + TODAY + ':"); docs/current/troubleshooting.md OR .devmeta/testing-notes.md (a recurring build/TEST failure — hit by >=2 features/iterations); .devmeta/lessons-learned.md (one-off gotcha); fix/delete an outdated doc. Engine-scope learnings (scope:"engine") go to .devmeta/engine-notes.md (things that should change the WORKFLOW, not the project) — flag any that are actually project-specific so the generic engine does not accrete this project\'s quirks.',
+  '2. NARRATIVE history: append a short narrative paragraph to .devmeta/project-history.md for iteration ' + ITER + ' (what shipped + where agents struggled/surprised/exceeded — not just a one-liner), with head sha and gate results.',
+  '3. IA-CYCLE report: write ' + DIR + '/ia-cycles/iteration-' + ITER + '.md with: gate results, drift findings, gaps verified (failed verdicts), tests authored (obligations vs testsAdded), learnings routed (and to where), and any plan changes. Return this path as reportPath.',
+  '4. MINOR drift -> next-iteration cleanup: ' + JSON.stringify(driftMinor) + '. If non-empty, add them as explicit cleanup deliverables on the NEXT not-DONE iteration row/section in ' + DIR + '/_overview.md (scope grows, never shrinks). List them in cleanupForNextIteration.',
+  '5. PLAN REASSESSMENT: read the remaining (not-DONE) iterations; propose edits (split/merge/reorder/inject; absorbed-by-drift; missing prerequisite). PROPOSE in reassessment[] (one line each). Apply only low-risk reorders/injections directly to _overview.md; leave anything material for the human gate. Never shrink scope.',
+  'Then: stage your doc changes (named paths only, never git add -A), git commit --no-verify -m "devmeta3 harvest iteration ' + ITER + '", restore registry.json if dirtied. Return the structured harvest result (filed[], reportPath, reassessment[], cleanupForNextIteration[], committed).',
+].join('\n')
+const harvest = await agent(harvestPrompt, { schema: HARVEST_SCHEMA, label: 'harvest:' + ITER, phase: 'Harvest' })
+
+log('devmeta3 iteration ' + ITER + ' complete. outcome=' + outcome + '; harvested ' + (harvest.filed || []).length + ' item(s); reassessment ' + ((harvest.reassessment || []).length) + ' proposal(s)')
 return {
   iteration: ITER,
+  outcome,
+  gatesPass,
+  reflectClean,
   plan,
   built,
   integrate,
   gates,
   verdicts,
-  gatesPass,
-  reflectClean: gaps.length === 0,
-  outcome: gatesPass && gaps.length === 0 ? "PASS" : "NEEDS_WORK",
-};
+  driftFindings,
+  harvest,
+}
