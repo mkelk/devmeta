@@ -50,8 +50,14 @@ The v1 engine hardened *what it checked* but **narrowed** quality: test *authori
 - **Self-learning flywheel** — `learnings[]` on build/integrate/fix returns (the structured replacement for `context-log.md`, preserving one control plane) feed a **Harvest** phase that routes each to a typed durable home with an explicit router, so the next iteration's Plan/Build read it. (critique §4) Engine-scope learnings route to `.devmeta/engine-notes.md`, unfreezing the hand-baked engine lessons. (critique §5.3)
 - **Self-improvement** — plan reassessment on PASS, narrative history, `ia-cycles/` reports. (critique §5)
 
+### v2.1 — refinements from the Deal-staleness validation
+Three fixes from observing v2 on a fresh increment:
+- **Outcome is three-tiered**, not binary: `PASS` (clean) · `PASS_WITH_CLEANUP` (gates green, only **minor** verdicts/drift — advances + queues cleanup) · `NEEDS_WORK` (gates red, or a **major/blocker** verdict/drift — human checkpoint). Reflect verdicts are **severity-graded**: a low-confidence/minor skeptic flag no longer stalls a shippable iteration (skeptics are told to prefer `minor` when uncertain; a failed verdict with no severity fails safe to blocking).
+- **Status authority:** Harvest may NOT mark an iteration DONE or edit a `Status:` line — that is `go`'s decision at the human gate. Harvest only routes knowledge, writes the report/history, queues cleanup, and proposes reassessment. (v2 let Harvest overstep.)
+- **Dependency-branch merge:** build agents now merge their **sibling dependency feature branches** (`feature/devmeta3-<iter>-<dep>`), not just the base — because integrate merges feature branches later, so a wave-2 feature's wave-1 foundation is otherwise absent in its worktree. (Self-discovered by the engine and routed to `engine-notes.md`, then folded into the build prompt — the §5.3 loop working.)
+
 ## What is proven vs not (be honest)
-- **Proven (this repo):** the execution substrate + generic Plan/Integrate drove fresh, unseen increments to green autonomously (Quotes 1.2 hardcoded-prototype; Task-priority clean-room — generic), one control plane, no `tk`.
+- **Proven (this repo):** the execution substrate + generic Plan/Integrate drove fresh, unseen increments to green autonomously (Quotes 1.2 hardcoded-prototype; Task-priority clean-room — generic; Deal-staleness — v2 with full quality mechanics + flywheel), one control plane, no `tk`.
 - **Newly added in v2 (validate before fully trusting):** the testing obligations, coverage gate, test-quality + drift skeptics, and the Harvest flywheel. The meta-acceptance (critique §10) is the bar: in a 2+ iteration increment, iteration N+1 demonstrably reuses knowledge Harvest filed in N and does not repeat N's non-obvious failures.
 
 ## Known limits
