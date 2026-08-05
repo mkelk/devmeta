@@ -140,9 +140,9 @@ After this phase, the base branch is established. All subsequent operations read
 **Multi-repo mode** (`devmeta.md` has a `## Repos` section): the branch in `base-branch` is the increment branch for EVERY repo in play, not just this one. After establishing it here (the hub):
 
 1. Read the increment's repo set from its `_overview.md > Repos` — which repos the increment *modifies* vs. only needs to *understand*. Resolve each slug to a local path via `devmeta.md > Repos`.
-2. **Readiness gate.** Every repo in the set must be cloned locally, fetched, and level with `origin/master` — if any is missing or behind, STOP and ask the user. Never guess a repo's contents.
-3. In each modified repo, create the **identical** branch name from its latest `master` (`git checkout -b <branch> master`), push with `-u origin`. Never diverge branch names across repos.
-4. **On resume** (base-branch file already exists): each modified repo must be *on the increment branch* — check it out if needed. Do not require `master` here; master-freshness applies only when first cutting a repo's branch.
+2. **Readiness gate.** Every repo in the set must be cloned locally, fetched, and level with its **default branch** on origin. Default branches vary per repo (`main` vs `master`) — detect with `git symbolic-ref refs/remotes/origin/HEAD` (fallback: `git ls-remote --symref origin HEAD`), never assume. If any repo is missing or behind, STOP and ask the user. Never guess a repo's contents.
+3. In each modified repo, create the **identical** branch name from its latest default branch (`git checkout -b <branch> <default-branch>`), push with `-u origin`. Never diverge branch names across repos.
+4. **On resume** (base-branch file already exists): each modified repo must be *on the increment branch* — check it out if needed. Do not require the default branch here; default-branch freshness applies only when first cutting a repo's branch.
 
 ## Phase 1: Environment Check (iteration 1 only, or when needed)
 
