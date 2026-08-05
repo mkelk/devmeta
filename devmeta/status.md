@@ -34,7 +34,7 @@ Provide a clear status report and suggest the next action.
    ```bash
    tk list --type epic --json 2>/dev/null
    ```
-4. **Multi-repo mode** (`devmeta.md` has a `## Repos` section): for each repo in the increment's `_overview.md > Repos`, report availability and current branch (`git -C <path> branch --show-current`) — flag modified repos that are missing or not on the increment branch.
+4. **Multi-repo mode** (`devmeta.md` has a `## Repos` section): for each repo in the increment's `_overview.md > Repos`, report availability and current branch (`git -C <path> branch --show-current`) — flag any repo that is missing, and modified repos not on the increment branch.
 
 ### Step 2: Compute Progress
 
