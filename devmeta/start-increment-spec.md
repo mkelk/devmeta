@@ -77,6 +77,19 @@ Write `.devmeta/increments/increment-<NN>-<XXX>/_overview.md` using this templat
 
 ---
 
+## Repos
+
+<!-- Multi-repo mode only (devmeta.md has a `## Repos` section) — delete this section otherwise.
+     Role: "modified" = this increment changes it (gets the increment branch and PRs);
+     "understanding" = read-only context. Every listed repo must be present, latest master. -->
+
+| Slug | Role | Local path | Available? |
+|------|------|------------|------------|
+| <slug> | modified | <path> | yes / MISSING |
+| <slug> | understanding | <path> | yes / MISSING |
+
+---
+
 ## Iteration Map
 
 | # | Title | What Gets Built |
@@ -143,10 +156,11 @@ Begin an interactive dialogue to flesh out the overview. Ask about:
 2. **On-screen deliverables:** What will visually change?
 3. **Under-the-hood deliverables:** What technical work is needed?
 4. **Exclusions:** What is explicitly out of scope?
-5. **Iterations:** How should the work be split? (Aim for 2-5 iterations, each 1-3 days of agent work)
-6. **Dependencies:** What must exist before this increment can start?
-7. **Blocked items:** Anything that needs human action (API keys, accounts, etc.)?
-8. **Exit criteria:** How do we know the increment is done?
+5. **Repos (multi-repo mode only):** Which repos does this increment modify? Which does it only need to understand? Propose candidates from the project docs/dependency map, confirm with the user, and fill the `## Repos` table. Then check availability: every listed repo must be cloned locally and level with `origin/master` — if not, ask the user to fix that before finalizing.
+6. **Iterations:** How should the work be split? (Aim for 2-5 iterations, each 1-3 days of agent work)
+7. **Dependencies:** What must exist before this increment can start?
+8. **Blocked items:** Anything that needs human action (API keys, accounts, etc.)?
+9. **Exit criteria:** How do we know the increment is done?
 
 Update the `_overview.md` with each answer.
 
