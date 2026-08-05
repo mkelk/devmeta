@@ -82,8 +82,12 @@ FOR each wave:
      b. Read base branch from `<increment-dir>/base-branch` (find increment dir via `.devmeta/current-increment.md`)
      c. Create feature branch: git checkout -b feature/YYYY-MM-DD-<feature-name> <base-branch>
      d. Push branch: git push -u origin feature/YYYY-MM-DD-<feature-name>
+     [Multi-repo mode: run (c) and (d) INSIDE the feature's target repo — the `## Repo`
+      line in the epic description names its local path. The increment branch (same name
+      as base-branch) already exists there from go Phase 0.5; branch from it. The hub
+      repo gets no feature branch unless the feature modifies the hub itself.]
   3. Spawn one subagent per feature — ALL in a SINGLE message (parallel)
-     Include feature branch name in worker prompt
+     Include feature branch name in worker prompt (multi-repo mode: also the target repo path)
   4. Wait for all subagents to complete
   5. Collect results, update status
   6. Report wave results
@@ -101,6 +105,9 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
 
 **Feature:** [<epic-id>] <epic-title>
 **Branch:** feature/YYYY-MM-DD-<feature-name> (already created — checkout and work here)
+**Repo:** <multi-repo mode only: slug — local path. ALL code work, commits, and the PR happen
+inside this repo. tk commands, context-log.md, and .devmeta/ files live in the hub repo at
+<hub path> — read and write them there.>
 
 ### Feature Description
 
@@ -163,6 +170,7 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
 - When you solve a problem, also write it to .devmeta/lessons-learned.md
 - Use tk commands, never edit .tick/issues/ directly
 - Work on the feature branch. Commit after each task with `[TASK-ID] <summary>`. Create PR targeting the base branch (from `<increment-dir>/base-branch`) when all tasks done
+- Multi-repo mode: git commands (branch, commit, PR) run inside the target repo; the PR targets the increment branch IN THAT REPO. Never commit code to the hub repo unless the feature explicitly modifies it
 - NEVER reduce scope. If something is hard, work harder. If something is blocked, unblock it. Only the human can cut features
 
 ```

@@ -103,6 +103,8 @@ git commit -m "Update .tick/ and .devmeta/ metadata for iteration N"
 
 This is NOT optional. Without this step, 30-40 metadata files accumulate as dirty working tree state across iterations. The commit goes directly on the base branch — no PR needed for metadata-only changes.
 
+**Multi-repo mode:** this metadata commit happens in the **hub** repo only (where `.devmeta/` and `.tick/` live). The "Create PR" and "Merge PR" tasks, by contrast, apply **per modified repo**: each repo with commits this iteration gets its own PR from its feature branch(es) into its increment branch, merged in that repo.
+
 ### Last I&A Cycle Task = First Task of Next Iteration
 
 The last task in every I&A cycle is **concrete work for the next iteration** — typically "Plan Iteration N+1: read scope from _overview.md, create feature tick structure, begin first task." This is NOT a meta/handoff task. It's real work.
@@ -134,6 +136,13 @@ This is the ONE exception to "never ask permission" — you MUST ask which branc
 4. Write the chosen branch name to `<increment-dir>/base-branch`
 
 After this phase, the base branch is established. All subsequent operations read it from the file.
+
+**Multi-repo mode** (`devmeta.md` has a `## Repos` section): the branch in `base-branch` is the increment branch for EVERY repo in play, not just this one. After establishing it here (the hub):
+
+1. Read the increment's repo set from its `_overview.md > Repos` — which repos the increment *modifies* vs. only needs to *understand*. Resolve each slug to a local path via `devmeta.md > Repos`.
+2. **Readiness gate.** Every *modified* repo must be cloned locally, fetched, and level with `origin/master` before its branch is cut — if any is missing or behind, STOP and ask the user. *Understanding-only* repos: inspect if present; if absent, note it in the iteration status and rely on docs with conclusions marked `UNVERIFIED` — never guess repo contents.
+3. In each modified repo, create the **identical** branch name from its latest `master` (`git checkout -b <branch> master`), push with `-u origin`. Never diverge branch names across repos.
+4. **On resume** (base-branch file already exists): each modified repo must be *on the increment branch* — check it out if needed. Do not require `master` here; master-freshness applies only when first cutting a repo's branch.
 
 ## Phase 1: Environment Check (iteration 1 only, or when needed)
 

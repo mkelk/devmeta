@@ -107,6 +107,31 @@ Three sections are recognized:
 
 If no `.devmeta/devmeta.md` exists, DevMeta falls back to `package.json` scripts for testing and skips environment checks.
 
+## Multi-Repo Mode (config-driven)
+
+DevMeta normally assumes the repo it runs in contains the code being changed. Some projects are instead a **hub**: a coordination repo holding `.devmeta/`, `.tick/`, and docs, while the code lives in sibling repos (e.g. a consultancy basecamp documenting many customer repos).
+
+Multi-repo mode switches on when `.devmeta/devmeta.md` contains a `## Repos` section. Without that section, nothing changes — all commands behave exactly as documented above. The section tells the engine how to resolve a project to a local working copy:
+
+```markdown
+## Repos
+
+Hub: this repo holds `.devmeta/`, `.tick/`, and docs; code lives in sibling repos.
+Clone root: `~/git/<org>/` — a project's working copy is `<clone root>/<repo name>`.
+
+| Slug | Local path | Remote |
+|------|------------|--------|
+| my-app | ~/git/org/my-app | git@github.com:org/my-app.git |
+```
+
+What changes when the section is present:
+
+- **Increment specs declare a repo set** (`_overview.md > Repos`): every repo the increment **modifies**, and every repo it only needs to **understand**.
+- **Readiness gate** (at spec time and at increment start): *modified* repos must be present locally and level with `origin/master` — else STOP and ask the user. *Understanding-only* repos are inspected if present; if absent, proceed on documentation alone but mark such conclusions `UNVERIFIED` — normal for consultants who don't hold every repo.
+- **One increment branch name everywhere.** The base branch name (`go` Phase 0.5) is created identically in the hub and in every modified repo, each cut from that repo's latest `master`.
+- **Code work happens inside each target repo.** Feature specs name their repo; feature branches, commits, and PRs live in that repo, with PRs targeting that repo's increment branch. `.tick/` and `.devmeta/` metadata commits stay in the hub.
+- **I&A covers every modified repo:** code review and iteration tags run per repo; reports and docs stay in the hub.
+
 ## Key Principles
 
 - **Scope never shrinks.** Only the human can cut scope. The agent works harder or asks for help.

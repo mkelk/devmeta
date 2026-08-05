@@ -74,6 +74,8 @@ This is the most important step. Read the actual code that was written during th
    git log --name-only --since="<iteration-start-date>" --pretty=format: | sort -u
    ```
 
+   **Multi-repo mode** (`devmeta.md` has a `## Repos` section): run this review inside **each repo the iteration modified** (repo set from the increment's `_overview.md > Repos`; paths from `devmeta.md > Repos`) — the hub's own log covers only metadata.
+
 2. **For each significant file**, ask:
    - Would an experienced developer recognize this as standard, idiomatic code?
    - Does it follow the patterns in `docs/current/principles-and-choices.md`?
@@ -209,6 +211,8 @@ git tag iteration-<NN>-<XXX>.<M> -m "Iteration <N> complete: <summary>"
 ```
 
 Example: for iteration 76.1 of increment 76-abc, the tag is `iteration-76-abc.1`. Read the active increment's suffixed identifier from `.devmeta/current-increment.md`.
+
+**Multi-repo mode:** apply the same tag in the hub **and** in every repo the iteration modified, so the cross-repo state at each iteration boundary is recoverable.
 
 **Prune completed ticks:**
 ```bash

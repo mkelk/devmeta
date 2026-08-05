@@ -86,6 +86,8 @@ Deliverable B → creates: file4 | modifies: file3, file5
 Shared files: file3 (A, B)
 ```
 
+**Multi-repo mode** (`devmeta.md` has a `## Repos` section): map footprints **per repo** — every deliverable names the repo it lands in (from the increment's `_overview.md > Repos`). Prefer feature boundaries that keep each feature within ONE repo; a cross-repo feature is allowed only when the change is genuinely atomic across repos, and must name all its repos.
+
 ### Step 3: Find the Cuts (THE CRITICAL STEP)
 
 Graph partitioning — group deliverables into features:
@@ -113,6 +115,7 @@ For each feature, create a spec file:
 
 Each spec contains:
 - Scope (what this feature delivers)
+- Target repo (multi-repo mode: slug + local path from `devmeta.md > Repos`)
 - Architecture (files to create/modify)
 - Implementation guide (ordered steps)
 - Test strategy (surgical commands)
@@ -135,10 +138,13 @@ Each spec contains:
 
 ### Step 6: Create Features and Tasks in tk
 
-**Feature format:**
+**Feature format** (multi-repo mode: include the `## Repo` line; omit it otherwise):
 ```bash
 tk create "<iteration>: <phase>" -t epic -d "## Scope
 <What this feature delivers>
+
+## Repo
+<slug> — \`<local path>\` (all code work happens here; tk and .devmeta/ stay in the hub)
 
 ## Spec
 \`.devmeta/projects/YYYY-MM-DD-<name>/YYYY-MM-DD-<name>-spec.md\`
@@ -224,6 +230,7 @@ If the human needs to intervene, they will interrupt. Your job is to keep moving
 ## Quality Checklist
 
 - [ ] No file modified by two independent features
+- [ ] Multi-repo mode: every feature names its target repo; cross-repo features only when atomic
 - [ ] Shared code in foundation feature
 - [ ] Each feature fits in ~60-70% of context
 - [ ] Tasks ordered and building on each other within feature
