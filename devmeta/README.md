@@ -14,16 +14,17 @@ A Claude Code slash-command framework for autonomous, increment-driven software 
 
 ## Commands
 
-### Normal use — only two commands
+### Normal use — two commands, plus an optional precursor
 
 In day-to-day use you should only ever need these:
 
 | Command | Purpose |
 |---------|---------|
+| `/devmeta:discuss-project` | *(optional)* Open discussion of how a project could be carried out — for when content or approach is not yet clear. Writes a thinking doc to `docs/thoughts/` |
 | `/devmeta:start-increment-spec` | Create a new increment (scope of work) via interactive dialogue |
 | `/devmeta:go` | Autonomous driver — assesses state, executes next work, loops until done |
 
-The workflow is: run `start-increment-spec` once to define the work, then run `go` and let it drive. `go` handles planning, execution, reflection, and moving between iterations on its own.
+The workflow is: if the shape of the work is still unclear, run `discuss-project` first to explore options and converge on a direction; then run `start-increment-spec` once to define the work, then run `go` and let it drive. `go` handles planning, execution, reflection, and moving between iterations on its own.
 
 ### Internal commands (invoked by `/devmeta:go`, not by the user)
 
@@ -39,6 +40,7 @@ These are orchestration primitives that `/devmeta:go` calls internally. You can 
 
 ## Concepts
 
+- **Discussion** — Pre-increment exploration of how a project *could* be carried out, recorded in `docs/thoughts/`. Concludes by handing off to an increment spec.
 - **Increment** — A major scope of work (e.g., "Document management + audit export"). Contains multiple iterations.
 - **Iteration** — A deliverable slice within an increment. Produces a PR. Followed by an I&A cycle.
 - **Feature** — The unit of parallel execution. One subagent runs one feature. Tasks within are sequential.
@@ -75,6 +77,10 @@ Task tracking uses `tk` (tick tracker). Features are epics, work items are tasks
 Two commands per increment, repeated.
 
 ```bash
+# 0. (Optional) Not yet clear what to build or how? Discuss first.
+/devmeta:discuss-project "My unclear project idea"
+#    → docs/thoughts/YYYY-MM-DD-<topic>.md — options, open questions, direction
+
 # 1. Start a new increment (interactive scope definition)
 /devmeta:start-increment-spec "My Feature"
 
