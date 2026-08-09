@@ -48,9 +48,6 @@ From `$ARGUMENTS` (or by asking the user), establish:
    it?), or both
 3. **What a good outcome looks like** — a chosen direction? a set of options for a human
    decision? a go/no-go? enough clarity to write the increment spec?
-4. **Opgavenummer** — ask whether an opgavenummer (DevOps work-item number) exists for
-   this work; if yes, have the user provide it. "None yet" is a normal answer at
-   discussion stage — never invent one. Record the answer in the document header.
 
 Choose a short kebab-case slug for the topic — call it `<slug>` for the rest of this
 command. **Check `docs/thoughts/` for an existing discussion on this topic first** (any
@@ -82,7 +79,7 @@ docs/thoughts/<YYYY-MM-DD>-<slug>.md
 ```
 
 **When extra resources are involved** (screenshots, graphics, specs downloaded from
-elsewhere, data exports) — make a folder instead and put everything in it:
+elsewhere, data exports, etc) — make a folder instead and put everything in it:
 
 ```
 docs/thoughts/<YYYY-MM-DD>-<slug>/
@@ -101,7 +98,6 @@ Document template:
 
 **Started:** <YYYY-MM-DD>
 **Status:** OPEN | PARKED | CONCLUDED — <direction / handoff>
-**Opgavenummer:** <number, or "none yet">
 
 ## What we're trying to figure out
 
@@ -160,8 +156,7 @@ A discussion doesn't have to finish in one sitting — set **Status** accordingl
 - **PARKED** — waiting on answers to open questions; note what unblocks it.
 - **CONCLUDED** — direction chosen. Fill in **Emerging direction** and **Next steps**;
   the normal handoff is `/devmeta:start-increment-spec "<title>"`, and the increment spec
-  should link back to this document and carry the opgavenummer forward (project rules use
-  it in branch names and commit references).
+  should link back to this document.
 
 Report:
 
@@ -169,7 +164,6 @@ Report:
 ## Discussion — <Topic> (<STATUS>)
 
 **Document:** `docs/thoughts/<YYYY-MM-DD>-<slug>.md` (or `.../<YYYY-MM-DD>-<slug>/_discussion.md`)
-**Opgavenummer:** <number, or "none yet">
 **Repos inspected:** <list, or "none yet">
 **Direction:** <one line, or "still open">
 **Open questions:** <N>
