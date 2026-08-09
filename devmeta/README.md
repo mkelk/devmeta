@@ -35,8 +35,8 @@ These are orchestration primitives that `/devmeta:go` calls internally. You can 
 | `/devmeta:plan-iteration N` | Break an iteration into features and tasks, optimized for parallel execution |
 | `/devmeta:run [--all]` | Execute features — one subagent per feature, parallel across independent waves |
 | `/devmeta:reflect N` | Inspect & Adapt cycle — code review, docs audit, gap verification, plan reassessment |
-| `/devmeta:status` | Read-only progress report with suggested next action (safe to run anytime) |
-| `/devmeta:migrate-from-adapt` | One-time migration from ADAPT (.adapt/) to DevMeta (.devmeta/) |
+
+`/devmeta:status` is a **read-only** helper you can run at any time for a progress check — it is *not* part of the autonomous loop and `/devmeta:go` never invokes it.
 
 ## Concepts
 
@@ -57,14 +57,14 @@ DevMeta stores artifacts in `.devmeta/` at the project root:
   project-history.md        # Narrative record of what was built
   lessons-learned.md        # Accumulated learnings
   increments/
-    increment-01-abc/       # <NN>-<XXX>: integer for sorting + 3-letter random suffix
+    increment-76-abc/       # <NN>-<XXX>: zero-padded integer for sorting + 3-letter random suffix
       _overview.md           # Scope, iteration map, exit criteria
       iterations/            # Per-iteration status files
       ia-cycles/             # Per-iteration I&A reports for this increment
   projects/                  # Feature specs and context logs
 ```
 
-Increment directories use a numeric prefix for sorting plus a 3-letter random suffix
+Increment directories use a zero-padded numeric prefix for sorting plus a 3-letter random suffix
 (e.g. `increment-76-abc/`). The suffix prevents merge conflicts when two parallel
 branches/worktrees both create the next increment. Iteration numbers within an
 increment are unsuffixed (`76.1`, `76.1R`) — they're already namespaced by the

@@ -13,6 +13,8 @@ If no `.devmeta/devmeta.md` exists:
 - Environment: skip checks
 - Additional rules: none
 
+> **tk mapping:** tk -t epic = DevMeta Feature, tk -t task = DevMeta Task
+
 ---
 
 ## Context

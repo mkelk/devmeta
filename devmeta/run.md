@@ -152,7 +152,7 @@ inside this repo. tk commands, context-log.md, and .devmeta/ files live in the h
 8. After ALL tasks done:
    a. Append learnings to context-log.md
    b. tk note <epic-id> "FEATURE COMPLETE: <summary>"
-   c. Create PR: `gh pr create --title "<feature title>" --body "<summary>"`
+   c. Push the feature branch: `git push`. Do NOT open a PR — the coordinator opens a single PR per iteration once the iteration's features are complete.
 9. If a task cannot be completed:
    a. tk update <task-id> --awaiting escalation
    b. tk note <task-id> "<what's blocking and what was tried>"
@@ -169,8 +169,8 @@ inside this repo. tk commands, context-log.md, and .devmeta/ files live in the h
 - Leave useful notes in context-log.md
 - When you solve a problem, also write it to .devmeta/lessons-learned.md
 - Use tk commands, never edit .tick/issues/ directly
-- Work on the feature branch. Commit after each task with `[TASK-ID] <summary>`. Create PR targeting the base branch (from `<increment-dir>/base-branch`) when all tasks done
-- Multi-repo mode: git commands (branch, commit, PR) run inside the target repo; the PR targets the increment branch IN THAT REPO. Never commit code to the hub repo unless the feature explicitly modifies it
+- Work on the feature branch. Commit after each task with `[TASK-ID] <summary>`, and push when all tasks pass. Do NOT open a PR — PR creation is the coordinator's iteration-level task (`go`'s "Create PR for iteration N"), which opens one PR per iteration into the base branch (from `<increment-dir>/base-branch`)
+- Multi-repo mode: git commands (branch, commit, push) run inside the target repo; the coordinator opens the per-repo iteration PR targeting that repo's increment branch. Never commit code to the hub repo unless the feature explicitly modifies it
 - NEVER reduce scope. If something is hard, work harder. If something is blocked, unblock it. Only the human can cut features
 
 ```

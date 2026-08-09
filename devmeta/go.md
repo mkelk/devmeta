@@ -20,7 +20,7 @@ If no `.devmeta/devmeta.md` exists:
 
 This is the single command that drives the entire project. Run it to start. Run it again to continue. It figures out where the project is and does the next thing, autonomously, until it hits a genuine external blocker or closes all gaps.
 
-**Current increment:** Defined in `.devmeta/current-increment.md`. Follow the pointer to the active increment's `_overview.md` for scope, iterations, and gap analysis. The active line names the increment as `Increment <NN>-<XXX>` (integer + 3-letter random suffix added to avoid parallel-branch collisions); its directory is `.devmeta/increments/increment-<NN>-<XXX>/`. Iteration numbers within use the integer only (`<NN>.1`, `<NN>.1R`).
+**Current increment:** Defined in `.devmeta/current-increment.md`. Follow the pointer to the active increment's `_overview.md` for scope, iterations, and gap analysis. The active line names the increment as `Increment <NN>-<XXX>` (zero-padded integer + 3-letter random suffix added to avoid parallel-branch collisions); its directory is `.devmeta/increments/increment-<NN>-<XXX>/`. Iteration numbers within use the integer only (`<NN>.1`, `<NN>.1R`).
 
 **You are the project driver.** You don't ask the user what to do — you assess the state and act. The only time you stop and ask is when you need something that requires human action on their physical machine (installing software, creating accounts, providing API keys).
 
@@ -77,7 +77,7 @@ Iteration N (epic, top-level)
 
 ```
 Iteration NR: Inspect & Adapt (epic, top-level, blocked by iteration N, runs on base branch from `<increment-dir>/base-branch` after merge)
-├── Run /devmeta:reflect N (task)  ← invokes the full 12-step I&A process
+├── Run /devmeta:reflect N (task)  ← invokes the full 13-step I&A process
 └── Plan Iteration N+1 (task)  ← REAL WORK, not a boundary
 ```
 
@@ -93,7 +93,7 @@ When you reach a "Re-ground after Feature X" task, do ALL of these before closin
 
 ### Commit Metadata to Base Branch (after every merge)
 
-After merging a PR and returning to the base branch, `.tick/` and `.devmeta/` files will have been modified during orchestration but NOT included in the feature branch PR (since they live on the base branch). You MUST commit them:
+After merging a PR and returning to the base branch, `.tick/` and `.devmeta/` files will have been modified during orchestration but NOT included in the iteration PR (since they live on the base branch, not the feature branches). You MUST commit them:
 
 ```bash
 git add .tick/ .devmeta/ tsconfig.tsbuildinfo
