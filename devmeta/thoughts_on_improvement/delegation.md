@@ -9,7 +9,7 @@ How work is decomposed and delegated across three systems: the **Main Coordinato
 | System | What it is | What it does | What it does NOT do |
 |--------|-----------|--------------|---------------------|
 | **Main Coordinator** | The single agent running `/devmeta:go` (and, within it, `/devmeta:plan-iteration`, `/devmeta:run`, `/devmeta:reflect`). | Assesses state, decomposes work into tk structure, schedules and spawns subagents, runs the I&A cycle, handles git/PR/merge at iteration boundaries. | Does **not** implement feature code in parallel — it delegates that to subagents. Does not invent next actions — it asks `tk`. |
-| **Subagents** (`tk-worker`) | Short-lived workers, **one per feature**, each with its own ~200k-token context. | Implement all tasks of one feature in order: code, tests, commits, feature PR. Communicate findings via `context-log.md` and `tk notes`. | Do **not** see each other. Do not pick their own work — they're handed an ordered task list. Do not cross feature boundaries (no shared files). |
+| **Subagents** (`tk-worker`) | Short-lived workers, **one per feature**, each with its own ~200k-token context. | Implement all tasks of one feature in order: code, tests, commits, then push the feature branch. Communicate findings via `context-log.md` and `tk notes`. | Do **not** see each other. Do not pick their own work — they're handed an ordered task list. Do not cross feature boundaries (no shared files). |
 | **tk** (tick tracker) | A passive CLI-backed state store. `epic` = Feature, `task` = Task. | Holds the entire work breakdown (iterations → features → tasks), dependencies, status, notes, acceptance criteria. Answers "what's next?" via `tk next`. **Single source of truth for project state.** | Does **nothing autonomously.** It records and serves state. It never spawns agents or runs code. Both coordinator and workers mutate it via CLI. |
 
 **Mental model:** `tk` is the shared brain (state), the Coordinator is the nervous system (decisions + scheduling), subagents are the hands (parallel execution).
@@ -35,7 +35,7 @@ flowchart TD
     FA --> TAR["Re-ground after Feature A<br/><i>always last task</i>"]
     FB --> TB1["Task 1 …"]
 
-    IAR --> R1["Run /devmeta:reflect N<br/><i>12-step skill</i>"]
+    IAR --> R1["Run /devmeta:reflect N<br/><i>13-step skill</i>"]
     IAR --> R2["Plan Iteration N+1<br/><i>real work, not a handoff</i>"]
 
     classDef human fill:#e8e8e8,stroke:#888,color:#000;
@@ -144,7 +144,7 @@ flowchart TD
     CL --> Q
     Q -- no --> AP["append learnings → context-log.md"]
     AP --> NT["tk note epic 'FEATURE COMPLETE'"]
-    NT --> PR["gh pr create (feature PR)"]
+    NT --> PUSH["git push (feature branch)"]
 
     IMP -.->|cannot complete| ESC["tk update task --awaiting escalation<br/>tk note task '&lt;blocker&gt;'"]
     ESC -.->|continue if possible| Q
@@ -229,11 +229,11 @@ Subagents run concurrently with no live coordination, so safety is structural, e
 These are done by the coordinator *itself* as ordinary tasks parented to the iteration — they're not subagent work:
 
 - **PR creation for the iteration**, **merge** (always `--merge`, never squash/rebase), and **returning to base branch**.
-- **Committing metadata** (`.tick/` and `.devmeta/`) to the base branch after merge — these files change during orchestration but aren't in the feature PRs.
+- **Committing metadata** (`.tick/` and `.devmeta/`) to the base branch after merge — these files change during orchestration but aren't in the iteration PR (they live on the base branch, not the feature branches).
 - **The I&A cycle** (`/devmeta:reflect N`) — code-quality review, outside-in gap verification, docs audit, git tag, pruning closed epics, project-history update, plan reassessment.
 - **Planning the next iteration** — the last I&A task is *real planning work*, deliberately not a "continue?" handoff, so the loop never stalls at an iteration boundary.
 
-> Note: `run.md`'s worker template instructs each `tk-worker` to open its **own** feature PR, while `go.md` models **one PR per iteration** (a coordinator task). In the `go`-driven loop these can conflict; the per-iteration PR is the intended model when running under `go`.
+> Note: PR creation is the coordinator's job — `go.md`'s iteration-level "Create PR for iteration N" task opens **one PR per iteration** (one per modified repo in multi-repo mode). Feature workers only commit and push their branch; they do not open PRs.
 
 ---
 

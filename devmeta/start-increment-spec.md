@@ -26,7 +26,7 @@ Create a new increment directory with a properly structured `_overview.md` and b
 
 ### Step 1: Determine Increment Number and Suffix
 
-Read `.devmeta/current-increment.md`. Parse the active increment line (`**Active:** Increment <num>[-<suffix>] — ...`) and extract the **leading integer**, ignoring any `-<suffix>` part. Add 1 to get the new increment number — call it `<NN>` for the rest of this command.
+Read `.devmeta/current-increment.md`. Parse the active increment line (`**Active:** Increment <num>[-<suffix>] — ...`) and extract the **leading integer**, ignoring any `-<suffix>` part. Add 1 to get the new increment number, then **zero-pad it to two digits** (e.g. `07`, `76`) so increment directories sort lexically — call it `<NN>` for the rest of this command.
 
 Generate a 3-letter random suffix `<XXX>` from `[a-z]` (e.g. `abc`, `xkl`, `qmt`). The suffix exists so parallel branches/worktrees that both pick the same `<NN>` land in different directories and don't merge-conflict on the increment subtree.
 
