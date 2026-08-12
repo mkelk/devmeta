@@ -1,4 +1,4 @@
-# DevMeta — Development Metadata Framework
+# DevMeta — Development Meta
 
 A Claude Code slash-command framework for autonomous, increment-driven software delivery. DevMeta manages the full lifecycle: scoping, planning, parallel execution via subagents, and structured reflection.
 
