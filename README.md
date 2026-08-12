@@ -1,8 +1,18 @@
-# DevMeta — Development Metadata Framework (Global: devmeta)
-
-> **Note:** This is the **global** (`devmeta`) version of the DevMeta commands, installed at `~/.claude/commands/devmeta/`. Projects may also have a local `/devmeta:` command set in `.claude/commands/devmeta/` that takes precedence for project-specific customizations.
+# DevMeta — Development Metadata Framework
 
 A Claude Code slash-command framework for autonomous, increment-driven software delivery. DevMeta manages the full lifecycle: scoping, planning, parallel execution via subagents, and structured reflection.
+
+## Installation
+
+The command definitions live in [`devmeta/`](devmeta/). Install them as a global Claude Code command set by linking (or copying) that directory into your Claude config:
+
+```bash
+git clone https://github.com/mkelk/devmeta.git
+cd devmeta
+ln -s "$PWD/devmeta" ~/.claude/commands/devmeta   # or: cp -r devmeta ~/.claude/commands/devmeta
+```
+
+Once installed, the `/devmeta:*` commands are available in any Claude Code session. A project may also ship a local `/devmeta:` set in its own `.claude/commands/devmeta/`, which takes precedence for project-specific customizations.
 
 ## Core Loop
 
